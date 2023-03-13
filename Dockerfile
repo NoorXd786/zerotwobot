@@ -1,10 +1,18 @@
-FROM jokerhacker/zerotwo-python:latest
+Stdout
+FROM python:3.11.2-slim-buster
 
-RUN  git clone https://github.com/NoorXd786/zerotwobot -b main  /root/zerotwo
-RUN  mkdir  /root/zerotwo/bin/
-WORKDIR /root/zerotwo/
+WORKDIR /zerotwobot/
 
-COPY  ./zerotwobot/elevated_users.json* ./zerotwobot/config.py* /root/zerotwo/zerotwobot/
-RUN pip3 install -r requirements.txt
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get -y install git
+RUN python3.11 -m pip install -U pip
+RUN apt-get install -y wget python3-pip curl bash neofetch ffmpeg software-properties-common
+RUN apt-get install -y --no-install-recommends ffmpeg
 
-CMD ["python3", "-m", "zerotwobot"]
+COPY requirements.txt .
+
+RUN pip3 install wheel
+RUN pip3 install --no-cache-dir -U -r requirements.txt
+
+COPY . .
+CMD ["python3.11", "-m", "zerotwobot"]
