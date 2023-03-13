@@ -28,14 +28,13 @@ ELEVATED_USERS_FILE = os.path.join(os.getcwd(), "zerotwobot/elevated_users.json"
 def check_user_id(user_id: int, context: ContextTypes.DEFAULT_TYPE) -> Optional[str]:
     bot = context.bot
     if not user_id:
-        reply = "That...is a chat! baka ka omae?"
+        return "That...is a chat! baka ka omae?"
 
     elif user_id == bot.id:
-        reply = "This does not work that way."
+        return "This does not work that way."
 
     else:
-        reply = None
-    return reply
+        return None
 
 @gloggable
 @check_admin(only_dev=True)
@@ -48,8 +47,7 @@ async def addsudo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     user_member = await bot.getChat(user_id)
     rt = ""
 
-    reply = check_user_id(user_id, bot)
-    if reply:
+    if reply := check_user_id(user_id, bot):
         await message.reply_text(reply)
         return ""
 
@@ -67,10 +65,7 @@ async def addsudo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         json.dump(data, outfile, indent=4)
 
     await update.effective_message.reply_text(
-        rt
-        + "\nSuccessfully set Disaster level of {} to Dragon!".format(
-            user_member.first_name,
-        ),
+        f"{rt}\nSuccessfully set Disaster level of {user_member.first_name} to Dragon!"
     )
 
     log_message = (
@@ -80,7 +75,7 @@ async def addsudo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     )
 
     if chat.type != "private":
-        log_message = f"<b>{html.escape(chat.title)}:</b>\n" + log_message
+        log_message = f"<b>{html.escape(chat.title)}:</b>\n{log_message}"
 
     return log_message
 
@@ -94,8 +89,7 @@ async def removesudo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     user_id = await extract_user(message, context, args)
     user_member = await bot.getChat(user_id)
 
-    reply = check_user_id(user_id, bot)
-    if reply:
+    if reply := check_user_id(user_id, bot):
         await message.reply_text(reply)
         return ""
 
@@ -117,7 +111,7 @@ async def removesudo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         )
 
         if chat.type != "private":
-            log_message = "<b>{}:</b>\n".format(html.escape(chat.title)) + log_message
+            log_message = f"<b>{html.escape(chat.title)}:</b>\n{log_message}"
 
         return log_message
 

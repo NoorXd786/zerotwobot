@@ -24,15 +24,11 @@ async def wiki(update: Update, context: ContextTypes.DEFAULT_TYPE):
         res = wikipedia.summary(search)
     except DisambiguationError as e:
         await update.message.reply_text(
-            "Disambiguated pages found! Adjust your query accordingly.\n<i>{}</i>".format(
-                e,
-            ),
+            f"Disambiguated pages found! Adjust your query accordingly.\n<i>{e}</i>",
             parse_mode=ParseMode.HTML,
         )
     except PageError as e:
-        await update.message.reply_text(
-            "<code>{}</code>".format(e), parse_mode=ParseMode.HTML,
-        )
+        await update.message.reply_text(f"<code>{e}</code>", parse_mode=ParseMode.HTML)
     if res:
         result = f"<b>{search}</b>\n\n"
         result += f"<i>{res}</i>\n"

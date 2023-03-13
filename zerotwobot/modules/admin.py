@@ -39,7 +39,7 @@ async def promote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
 
 
     if message.from_user.id == ChatID.ANONYMOUS_ADMIN:
-        
+
         await message.reply_text(
             text="You are an anonymous admin.",
             reply_markup=InlineKeyboardMarkup(
@@ -67,7 +67,10 @@ async def promote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     except:
         return
 
-    if user_member.status == ChatMemberStatus.ADMINISTRATOR or user_member.status == ChatMemberStatus.OWNER:
+    if user_member.status in [
+        ChatMemberStatus.ADMINISTRATOR,
+        ChatMemberStatus.OWNER,
+    ]:
         await message.reply_text("How am I meant to promote someone that's already an admin?")
         return
 
@@ -109,14 +112,7 @@ async def promote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         message_thread_id=message.message_thread_id if chat.is_forum else None
     )
 
-    log_message = (
-        f"<b>{html.escape(chat.title)}:</b>\n"
-        f"#PROMOTED\n"
-        f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-        f"<b>User:</b> {mention_html(user_member.user.id, user_member.user.first_name)}"
-    )
-
-    return log_message
+    return f"<b>{html.escape(chat.title)}:</b>\n#PROMOTED\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\n<b>User:</b> {mention_html(user_member.user.id, user_member.user.first_name)}"
 
 
 
@@ -135,7 +131,7 @@ async def demote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     demoter = await chat.get_member(user.id)
 
     if message.from_user.id == ChatID.ANONYMOUS_ADMIN:
-    
+
         await message.reply_text(
             text="You are an anonymous admin.",
             reply_markup=InlineKeyboardMarkup(
@@ -167,7 +163,7 @@ async def demote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         await message.reply_text("This person CREATED the chat, how would I demote them?")
         return
 
-    if not user_member.status == ChatMemberStatus.ADMINISTRATOR:
+    if user_member.status != ChatMemberStatus.ADMINISTRATOR:
         await message.reply_text("Can't demote what wasn't promoted!")
         return
 
@@ -199,14 +195,7 @@ async def demote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
             message_thread_id=message.message_thread_id if chat.is_forum else None
         )
 
-        log_message = (
-            f"<b>{html.escape(chat.title)}:</b>\n"
-            f"#DEMOTED\n"
-            f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-            f"<b>User:</b> {mention_html(user_member.user.id, user_member.user.first_name)}"
-        )
-
-        return log_message
+        return f"<b>{html.escape(chat.title)}:</b>\n#DEMOTED\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\n<b>User:</b> {mention_html(user_member.user.id, user_member.user.first_name)}"
     except BadRequest:
         await message.reply_text(
             "Could not demote. I might not be admin, or the admin status was appointed by another"
@@ -319,21 +308,17 @@ async def pin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     chat = update.effective_chat
     message = update.effective_message
 
-    is_group = chat.type != "private" and chat.type != "channel"
+    is_group = chat.type not in ["private", "channel"]
     prev_message = update.effective_message.reply_to_message
 
     is_silent = True
     if len(args) >= 1:
-        is_silent = not (
-            args[0].lower() == "notify"
-            or args[0].lower() == "loud"
-            or args[0].lower() == "violent"
-        )
+        is_silent = args[0].lower() not in ["notify", "loud", "violent"]
 
     if not prev_message:
         await message.reply_text("Please reply to message which you want to pin.")
         return
-    
+
     if message.from_user.id == 1087968824:
 
         await message.reply_text(
@@ -358,17 +343,9 @@ async def pin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 chat.id, prev_message.message_id, disable_notification=is_silent,
             )
         except BadRequest as excp:
-            if excp.message == "Chat_not_modified":
-                pass
-            else:
+            if excp.message != "Chat_not_modified":
                 raise
-        log_message = (
-            f"<b>{html.escape(chat.title)}:</b>\n"
-            f"#PINNED\n"
-            f"<b>Admin:</b> {mention_html(user.id, html.escape(user.first_name))}"
-        )
-
-        return log_message
+        return f"<b>{html.escape(chat.title)}:</b>\n#PINNED\n<b>Admin:</b> {mention_html(user.id, html.escape(user.first_name))}"
 
 
 @loggable
@@ -388,10 +365,10 @@ async def unpin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                     [
                         InlineKeyboardButton(
                             text="Click to prove Admin.",
-                            callback_data=f"admin_=unpin",
-                        ),
-                    ],
-                ],
+                            callback_data="admin_=unpin",
+                        )
+                    ]
+                ]
             ),
         )
 
@@ -409,13 +386,7 @@ async def unpin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         else:
             raise
 
-    log_message = (
-        f"<b>{html.escape(chat.title)}:</b>\n"
-        f"#UNPINNED\n"
-        f"<b>Admin:</b> {mention_html(user.id, html.escape(user.first_name))}"
-    )
-
-    return log_message
+    return f"<b>{html.escape(chat.title)}:</b>\n#UNPINNED\n<b>Admin:</b> {mention_html(user.id, html.escape(user.first_name))}"
 
 @loggable
 @check_admin(permission="can_pin_messages", is_both=True)
@@ -435,20 +406,20 @@ async def unpinall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                     [
                         InlineKeyboardButton(
                             text="Click to prove Admin.",
-                            callback_data=f"admin_=unpinall",
-                        ),
-                    ],
-                ],
+                            callback_data="admin_=unpinall",
+                        )
+                    ]
+                ]
             ),
         )
 
         return
     elif (
-            not admin_member.status == ChatMemberStatus.OWNER
-            and user.id not in DRAGONS
-        ):
-            await message.reply_text("Only chat OWNER can unpin all messages.")
-            return
+        admin_member.status != ChatMemberStatus.OWNER
+        and user.id not in DRAGONS
+    ):
+        await message.reply_text("Only chat OWNER can unpin all messages.")
+        return
 
 
     try:
@@ -457,18 +428,10 @@ async def unpinall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         else:
             await bot.unpin_all_chat_messages(chat.id)
     except BadRequest as excp:
-        if excp.message == "Chat_not_modified":
-            pass
-        else:
+        if excp.message != "Chat_not_modified":
             raise
 
-    log_message = (
-        f"<b>{html.escape(chat.title)}:</b>\n"
-        f"#UNPINNED_ALL\n"
-        f"<b>Admin:</b> {mention_html(user.id, html.escape(user.first_name))}"
-    )
-
-    return log_message
+    return f"<b>{html.escape(chat.title)}:</b>\n#UNPINNED_ALL\n<b>Admin:</b> {mention_html(user.id, html.escape(user.first_name))}"
 
 
 @connection_status
@@ -516,7 +479,7 @@ async def adminlist(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     administrators = await bot.getChatAdministrators(chat_id)
-    text = "Admins in <b>{}</b>:".format(html.escape(update.effective_chat.title))
+    text = f"Admins in <b>{html.escape(update.effective_chat.title)}</b>:"
 
     custom_admin_list = {}
     normal_admin_list = []
@@ -527,50 +490,44 @@ async def adminlist(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status = admin.status
             custom_title = admin.custom_title
 
-            if user.first_name == "":
-                name = "☠ Deleted Account"
-            else:
-                name = "{}".format(
-                    mention_html(
-                        user.id, html.escape(user.first_name + " " + (user.last_name or "")),
-                    ),
-                )
-
+            name = (
+                "☠ Deleted Account"
+                if user.first_name == ""
+                else f'{mention_html(user.id, html.escape(f"{user.first_name} " + (user.last_name or "")))}'
+            )
             # if user.username:
             #    name = escape_markdown("@" + user.username)
             if status == ChatMemberStatus.OWNER:
                 text += "\n 👑 Creator:"
-                text += "\n<code> • </code>{}\n".format(name)
+                text += f"\n<code> • </code>{name}\n"
 
                 if custom_title:
                     text += f"<code> ┗━ {html.escape(custom_title)}</code>\n"
-            
+
             if status == ChatMemberStatus.ADMINISTRATOR:
                 if custom_title:
                     try:
                         custom_admin_list[custom_title].append(name)
                     except KeyError:
-                        custom_admin_list.update({custom_title: [name]})
+                        custom_admin_list[custom_title] = [name]
                 else:
                     normal_admin_list.append(name)
 
     text += "\n🔱 Admins:"
 
     for admin in normal_admin_list:
-        text += "\n<code> • </code>{}".format(admin)
+        text += f"\n<code> • </code>{admin}"
 
     for admin_group in custom_admin_list.copy():
         if len(custom_admin_list[admin_group]) == 1:
-            text += "\n<code> • </code>{} | <code>{}</code>".format(
-                custom_admin_list[admin_group][0], html.escape(admin_group),
-            )
+            text += f"\n<code> • </code>{custom_admin_list[admin_group][0]} | <code>{html.escape(admin_group)}</code>"
             custom_admin_list.pop(admin_group)
 
     text += "\n"
     for admin_group, value in custom_admin_list.items():
-        text += "\n🚨 <code>{}</code>".format(admin_group)
+        text += f"\n🚨 <code>{admin_group}</code>"
         for admin in value:
-            text += "\n<code> • </code>{}".format(admin)
+            text += f"\n<code> • </code>{admin}"
         text += "\n"
 
     try:

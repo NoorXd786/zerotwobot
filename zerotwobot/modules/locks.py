@@ -119,10 +119,6 @@ async def restr_members(
     bot, chat_id, members, messages=False, media=False, other=False, previews=False,
 ):
     for mem in members:
-        if mem.user in DRAGONS:
-            pass
-        elif mem.user == 777000 or mem.user == 1087968824:
-            pass
         try:
             await bot.restrict_chat_member(
                 chat_id,
@@ -184,7 +180,7 @@ async def lock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 chat = await application.bot.getChat(conn)
                 chat_id = conn
                 chat_name = chat.title
-                text = "Locked {} for non-admins in {}!".format(ltype, chat_name)
+                text = f"Locked {ltype} for non-admins in {chat_name}!"
             else:
                 if update.effective_message.chat.type == "private":
                     await send_message(
@@ -195,20 +191,11 @@ async def lock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 chat = update.effective_chat
                 chat_id = update.effective_chat.id
                 chat_name = update.effective_message.chat.title
-                text = "Locked {} for non-admins!".format(ltype)
+                text = f"Locked {ltype} for non-admins!"
             sql.update_lock(chat.id, ltype, locked=True)
             await send_message(update.effective_message, text, parse_mode="markdown")
 
-            return (
-                "<b>{}:</b>"
-                "\n#LOCK"
-                "\n<b>Admin:</b> {}"
-                "\nLocked <code>{}</code>.".format(
-                    html.escape(chat.title),
-                    mention_html(user.id, user.first_name),
-                    ltype,
-                )
-            )
+            return f"<b>{html.escape(chat.title)}:</b>\n#LOCK\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\nLocked <code>{ltype}</code>."
 
         elif ltype in LOCK_CHAT_RESTRICTION:
             # Connection check
@@ -217,9 +204,7 @@ async def lock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 chat = await application.bot.getChat(conn)
                 chat_id = conn
                 chat_name = chat.title
-                text = "Locked {} for all non-admins in {}!".format(
-                    ltype, chat_name,
-                )
+                text = f"Locked {ltype} for all non-admins in {chat_name}!"
             else:
                 if update.effective_message.chat.type == "private":
                     await send_message(
@@ -230,10 +215,10 @@ async def lock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 chat = update.effective_chat
                 chat_id = update.effective_chat.id
                 chat_name = update.effective_message.chat.title
-                text = "Locked {} for all non-admins!".format(ltype)
+                text = f"Locked {ltype} for all non-admins!"
 
             chat_obj = await context.bot.getChat(chat_id)
-            current_permission = chat_obj.permissions                
+            current_permission = chat_obj.permissions
             await context.bot.set_chat_permissions(
                 chat_id=chat_id,
                 permissions=get_permission_list(
@@ -241,32 +226,33 @@ async def lock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                     LOCK_CHAT_RESTRICTION[ltype.lower()],
                 ),
             )
-            
-            await context.bot.restrict_chat_member(chat.id, int(777000), permissions=ChatPermissions(
-                can_send_messages=True,
-                can_send_media_messages=True,
-                can_send_other_messages=True,
-                can_add_web_page_previews=True))
 
-            await context.bot.restrict_chat_member(chat.id, int(1087968824), permissions=ChatPermissions(
-                can_send_messages=True,
-                can_send_media_messages=True,
-                can_send_other_messages=True,
-                can_add_web_page_previews=True))
+            await context.bot.restrict_chat_member(
+                chat.id,
+                777000,
+                permissions=ChatPermissions(
+                    can_send_messages=True,
+                    can_send_media_messages=True,
+                    can_send_other_messages=True,
+                    can_add_web_page_previews=True,
+                ),
+            )
+
+            await context.bot.restrict_chat_member(
+                chat.id,
+                1087968824,
+                permissions=ChatPermissions(
+                    can_send_messages=True,
+                    can_send_media_messages=True,
+                    can_send_other_messages=True,
+                    can_add_web_page_previews=True,
+                ),
+            )
 
 
 
             await send_message(update.effective_message, text, parse_mode="markdown")
-            return (
-                "<b>{}:</b>"
-                "\n#Permission_LOCK"
-                "\n<b>Admin:</b> {}"
-                "\nLocked <code>{}</code>.".format(
-                    html.escape(chat.title),
-                    mention_html(user.id, user.first_name),
-                    ltype,
-                )
-            )
+            return f"<b>{html.escape(chat.title)}:</b>\n#Permission_LOCK\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\nLocked <code>{ltype}</code>."
 
         else:
             await send_message(
@@ -286,11 +272,11 @@ async def lock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
 async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     args = context.args
     chat = update.effective_chat
-    user = update.effective_user
     message = update.effective_message
 
     if len(args) >= 1:
         ltype = args[0].lower()
+        user = update.effective_user
         if ltype in LOCK_TYPES:
             # Connection check
             conn = await connected(context.bot, update, chat, user.id, need_admin=True)
@@ -298,7 +284,7 @@ async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 chat = await application.bot.getChat(conn)
                 chat_id = conn
                 chat_name = chat.title
-                text = "Unlocked {} for everyone in {}!".format(ltype, chat_name)
+                text = f"Unlocked {ltype} for everyone in {chat_name}!"
             else:
                 if update.effective_message.chat.type == "private":
                     await send_message(
@@ -309,19 +295,10 @@ async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 chat = update.effective_chat
                 chat_id = update.effective_chat.id
                 chat_name = update.effective_message.chat.title
-                text = "Unlocked {} for everyone!".format(ltype)
+                text = f"Unlocked {ltype} for everyone!"
             sql.update_lock(chat.id, ltype, locked=False)
             await send_message(update.effective_message, text, parse_mode="markdown")
-            return (
-                "<b>{}:</b>"
-                "\n#UNLOCK"
-                "\n<b>Admin:</b> {}"
-                "\nUnlocked <code>{}</code>.".format(
-                    html.escape(chat.title),
-                    mention_html(user.id, user.first_name),
-                    ltype,
-                )
-            )
+            return f"<b>{html.escape(chat.title)}:</b>\n#UNLOCK\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\nUnlocked <code>{ltype}</code>."
 
         elif ltype in UNLOCK_CHAT_RESTRICTION:
             # Connection check
@@ -330,7 +307,7 @@ async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 chat = await application.bot.getChat(conn)
                 chat_id = conn
                 chat_name = chat.title
-                text = "Unlocked {} for everyone in {}!".format(ltype, chat_name)
+                text = f"Unlocked {ltype} for everyone in {chat_name}!"
             else:
                 if update.effective_message.chat.type == "private":
                     await send_message(
@@ -341,15 +318,15 @@ async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 chat = update.effective_chat
                 chat_id = update.effective_chat.id
                 chat_name = update.effective_message.chat.title
-                text = "Unlocked {} for everyone!".format(ltype)
-            
+                text = f"Unlocked {ltype} for everyone!"
+
             member = await chat.get_member(context.bot.id)
 
             if isinstance(member, ChatMemberAdministrator):
                 can_change_info = member.can_change_info
             else:
                 can_change_info = True
-            
+
             if not can_change_info:
                 await send_message(
                     update.effective_message,
@@ -359,7 +336,7 @@ async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
                 return
 
             chat_obj = await context.bot.getChat(chat_id)
-            current_permission = chat_obj.permissions 
+            current_permission = chat_obj.permissions
             await context.bot.set_chat_permissions(
                 chat_id=chat_id,
                 permissions=get_permission_list(
@@ -370,16 +347,7 @@ async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
 
             await send_message(update.effective_message, text, parse_mode="markdown")
 
-            return (
-                "<b>{}:</b>"
-                "\n#UNLOCK"
-                "\n<b>Admin:</b> {}"
-                "\nUnlocked <code>{}</code>.".format(
-                    html.escape(chat.title),
-                    mention_html(user.id, user.first_name),
-                    ltype,
-                )
-            )
+            return f"<b>{html.escape(chat.title)}:</b>\n#UNLOCK\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\nUnlocked <code>{ltype}</code>."
         else:
             await send_message(
                 update.effective_message,
@@ -404,92 +372,84 @@ async def del_lockables(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if lockable == "rtl":
             if sql.is_locked(chat.id, lockable):
                 if message.caption:
-                    check = ad.detect_alphabet(u"{}".format(message.caption))
+                    check = ad.detect_alphabet(f"{message.caption}")
                     if "ARABIC" in check:
                         try:
                             await message.delete()
                         except BadRequest as excp:
-                            if excp.message == "Message to delete not found":
-                                pass
-                            else:
+                            if excp.message != "Message to delete not found":
                                 LOGGER.exception("ERROR in lockables - rtl:caption")
                         break
                 if message.text:
-                    check = ad.detect_alphabet(u"{}".format(message.text))
+                    check = ad.detect_alphabet(f"{message.text}")
                     if "ARABIC" in check:
                         try:
                             await message.delete()
                         except BadRequest as excp:
-                            if excp.message == "Message to delete not found":
-                                pass
-                            else:
+                            if excp.message != "Message to delete not found":
                                 LOGGER.exception("ERROR in lockables - rtl:text")
                         break
             continue
         if lockable == "button":
-            if sql.is_locked(chat.id, lockable):
-                if message.reply_markup and message.reply_markup.inline_keyboard:
-                    try:
-                        await message.delete()
-                    except BadRequest as excp:
-                        if excp.message == "Message to delete not found":
-                            pass
-                        else:
-                            LOGGER.exception("ERROR in lockables - button")
-                    break
+            if (
+                sql.is_locked(chat.id, lockable)
+                and message.reply_markup
+                and message.reply_markup.inline_keyboard
+            ):
+                try:
+                    await message.delete()
+                except BadRequest as excp:
+                    if excp.message != "Message to delete not found":
+                        LOGGER.exception("ERROR in lockables - button")
+                break
             continue
         if lockable == "inline":
-            if sql.is_locked(chat.id, lockable):
-                if message and message.via_bot:
-                    try:
-                        await message.delete()
-                    except BadRequest as excp:
-                        if excp.message == "Message to delete not found":
-                            pass
-                        else:
-                            LOGGER.exception("ERROR in lockables - inline")
-                    break
+            if (
+                sql.is_locked(chat.id, lockable)
+                and message
+                and message.via_bot
+            ):
+                try:
+                    await message.delete()
+                except BadRequest as excp:
+                    if excp.message != "Message to delete not found":
+                        LOGGER.exception("ERROR in lockables - inline")
+                break
             continue
         if lockable == "forwardchannel":
             if sql.is_locked(chat.id, lockable):
-                if message.forward_from_chat:
-                    if message.forward_from_chat.type == "channel":
-                        try:
-                            await message.delete()
-                        except BadRequest as excp:
-                            if excp.message == "Message to delete not found":
-                                pass
-                            else:
-                                LOGGER.exception("ERROR in lockables - forwardchannel")
-                        break
+                if (
+                    message.forward_from_chat
+                    and message.forward_from_chat.type == "channel"
+                ):
+                    try:
+                        await message.delete()
+                    except BadRequest as excp:
+                        if excp.message != "Message to delete not found":
+                            LOGGER.exception("ERROR in lockables - forwardchannel")
+                    break
                 continue
             continue
         if lockable == "forwardbot":
             if sql.is_locked(chat.id, lockable):
-                if message.forward_from:
-                    if message.forward_from.is_bot:
-                        try:
-                            await message.delete()
-                        except BadRequest as excp:
-                            if excp.message == "Message to delete not found":
-                                pass
-                            else:
-                                LOGGER.exception("ERROR in lockables - forwardchannel")
-                        break
+                if message.forward_from and message.forward_from.is_bot:
+                    try:
+                        await message.delete()
+                    except BadRequest as excp:
+                        if excp.message != "Message to delete not found":
+                            LOGGER.exception("ERROR in lockables - forwardchannel")
+                    break
                 continue
             continue
         if lockable == "anonchannel":
             if sql.is_locked(chat.id, lockable):
-                if message.from_user:
-                    if message.from_user.id == 136817688:
-                        try:
-                            await message.delete()
-                        except BadRequest as excp:
-                            if excp.message == "Message to delete not found":
-                                pass
-                            else:
-                                LOGGER.exception("ERROR in lockables - anonchannel")
-                        break
+                if message.from_user and message.from_user.id == 136817688:
+                    try:
+                        await message.delete()
+                    except BadRequest as excp:
+                        if excp.message != "Message to delete not found":
+                            LOGGER.exception("ERROR in lockables - anonchannel")
+                    break
                 continue
             continue
         if (
@@ -518,9 +478,7 @@ async def del_lockables(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 try:
                     await message.delete()
                 except BadRequest as excp:
-                    if excp.message == "Message to delete not found":
-                        pass
-                    else:
+                    if excp.message != "Message to delete not found":
                         LOGGER.exception("ERROR in lockables")
 
                 break
@@ -533,57 +491,61 @@ async def build_lock_message(chat_id):
     permslist = []
     if locks:
         res += "*" + "These are the current locks in this Chat:" + "*"
-        if locks:
-            locklist.append("sticker = `{}`".format(locks.sticker))
-            locklist.append("audio = `{}`".format(locks.audio))
-            locklist.append("voice = `{}`".format(locks.voice))
-            locklist.append("document = `{}`".format(locks.document))
-            locklist.append("video = `{}`".format(locks.video))
-            locklist.append("contact = `{}`".format(locks.contact))
-            locklist.append("photo = `{}`".format(locks.photo))
-            locklist.append("gif = `{}`".format(locks.gif))
-            locklist.append("url = `{}`".format(locks.url))
-            locklist.append("bots = `{}`".format(locks.bots))
-            locklist.append("forward = `{}`".format(locks.forward))
-            locklist.append("game = `{}`".format(locks.game))
-            locklist.append("location = `{}`".format(locks.location))
-            locklist.append("rtl = `{}`".format(locks.rtl))
-            locklist.append("button = `{}`".format(locks.button))
-            locklist.append("egame = `{}`".format(locks.egame))
-            locklist.append("phone = `{}`".format(locks.phone))
-            locklist.append("command = `{}`".format(locks.command))
-            locklist.append("email = `{}`".format(locks.email))
-            locklist.append("anonchannel = `{}`".format(locks.anonchannel))
-            locklist.append("forwardchannel = `{}`".format(locks.forwardchannel))
-            locklist.append("forwardbot = `{}`".format(locks.forwardbot))
-            locklist.append("videonote = `{}`".format(locks.videonote))
-            locklist.append("emojicustom = `{}`".format(locks.emojicustom))
-            locklist.append("stickerpremium = `{}`".format(locks.stickerpremium))
-            locklist.append("stickeranimated = `{}`".format(locks.stickeranimated))
-
+        locklist.extend(
+            (
+                f"sticker = `{locks.sticker}`",
+                f"audio = `{locks.audio}`",
+                f"voice = `{locks.voice}`",
+                f"document = `{locks.document}`",
+                f"video = `{locks.video}`",
+                f"contact = `{locks.contact}`",
+                f"photo = `{locks.photo}`",
+                f"gif = `{locks.gif}`",
+                f"url = `{locks.url}`",
+                f"bots = `{locks.bots}`",
+                f"forward = `{locks.forward}`",
+                f"game = `{locks.game}`",
+                f"location = `{locks.location}`",
+                f"rtl = `{locks.rtl}`",
+                f"button = `{locks.button}`",
+                f"egame = `{locks.egame}`",
+                f"phone = `{locks.phone}`",
+                f"command = `{locks.command}`",
+                f"email = `{locks.email}`",
+                f"anonchannel = `{locks.anonchannel}`",
+                f"forwardchannel = `{locks.forwardchannel}`",
+                f"forwardbot = `{locks.forwardbot}`",
+                f"videonote = `{locks.videonote}`",
+                f"emojicustom = `{locks.emojicustom}`",
+                f"stickerpremium = `{locks.stickerpremium}`",
+                f"stickeranimated = `{locks.stickeranimated}`",
+            )
+        )
     permissions = await application.bot.get_chat(chat_id)
     if isinstance(permissions, Chat):
         permissions = permissions.permissions
-        permslist.append("messages = `{}`".format(permissions.can_send_messages))
-        permslist.append("media = `{}`".format(permissions.can_send_media_messages))
-        permslist.append("poll = `{}`".format(permissions.can_send_polls))
-        permslist.append("other = `{}`".format(permissions.can_send_other_messages))
-        permslist.append("previews = `{}`".format(permissions.can_add_web_page_previews))
-        permslist.append("info = `{}`".format(permissions.can_change_info))
-        permslist.append("invite = `{}`".format(permissions.can_invite_users))
-        permslist.append("pin = `{}`".format(permissions.can_pin_messages))
-        permslist.append("topics = `{}`".format(permissions.can_manage_topics))
-
-
+        permslist.extend(
+            (
+                f"messages = `{permissions.can_send_messages}`",
+                f"media = `{permissions.can_send_media_messages}`",
+                f"poll = `{permissions.can_send_polls}`",
+                f"other = `{permissions.can_send_other_messages}`",
+                f"previews = `{permissions.can_add_web_page_previews}`",
+                f"info = `{permissions.can_change_info}`",
+                f"invite = `{permissions.can_invite_users}`",
+                f"pin = `{permissions.can_pin_messages}`",
+                f"topics = `{permissions.can_manage_topics}`",
+            )
+        )
     if locklist:
         # Ordering lock list
         locklist.sort()
         # Building lock list string
         for x in locklist:
-            res += "\n • {}".format(x)
+            res += f"\n • {x}"
     res += "\n\n*" + "These are the current chat permissions:" + "*"
     for x in permslist:
-        res += "\n • {}".format(x)
+        res += f"\n • {x}"
     return res
 
 @typing_action
@@ -609,7 +571,7 @@ async def list_locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     res = await build_lock_message(chat.id)
     if conn:
-        res = res.replace("Locks in", "*{}*".format(chat_name))
+        res = res.replace("Locks in", f"*{chat_name}*")
 
     await send_message(update.effective_message, res, parse_mode=ParseMode.MARKDOWN)
 
@@ -626,10 +588,9 @@ def get_permission_list(current, new):
         "can_pin_messages": None,
         "can_manage_topics": None,
     }
-    permissions.update(current)
+    permissions |= current
     permissions.update(new)
-    new_permissions = ChatPermissions(**permissions)
-    return new_permissions
+    return ChatPermissions(**permissions)
 
 
 async def __import_data__(chat_id, data, message):
@@ -640,8 +601,6 @@ async def __import_data__(chat_id, data, message):
             sql.update_lock(chat_id, itemlock, locked=True)
         elif itemlock in LOCK_CHAT_RESTRICTION:
             sql.update_restriction(chat_id, itemlock, locked=True)
-        else:
-            pass
 
 
 def __migrate__(old_chat_id, new_chat_id):

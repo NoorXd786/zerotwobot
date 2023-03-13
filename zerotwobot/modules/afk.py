@@ -48,9 +48,7 @@ async def afk(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="html"
             )
         else:
-                await update.effective_message.reply_text(
-                "{} is now away!{}".format(fname, notice),
-            )   
+            await update.effective_message.reply_text(f"{fname} is now away!{notice}")
     except BadRequest:
         pass
 
@@ -68,8 +66,7 @@ async def no_longer_afk(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         time = humanize.naturaldelta(datetime.now() - afk_user.time)
 
-    res = sql.rm_afk(user.id)
-    if res:
+    if res := sql.rm_afk(user.id):
         if message.new_chat_members:  # dont say msg
             return
         firstname = update.effective_user.first_name
@@ -86,8 +83,8 @@ async def no_longer_afk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
             chosen_option = random.choice(options)
             await update.effective_message.reply_text(
-                chosen_option.format(firstname) + f"\nYou were AFK for: <code>{time}</code>",
-                parse_mode="html"
+                f"{chosen_option.format(firstname)}\nYou were AFK for: <code>{time}</code>",
+                parse_mode="html",
             )
         except:
             return
@@ -133,7 +130,7 @@ async def reply_afk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 chat = await bot.get_chat(user_id)
             except BadRequest:
-                LOGGER.error("Error: Could not fetch userid {} for AFK module".format(user_id))
+                LOGGER.error(f"Error: Could not fetch userid {user_id} for AFK module")
                 return
             fst_name = chat.first_name
 
@@ -146,27 +143,21 @@ async def reply_afk(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def check_afk(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int, fst_name: str, userc_id: int):
-    if sql.is_afk(user_id):
-        user = sql.check_afk_status(user_id)
+    if not sql.is_afk(user_id):
+        return
+    user = sql.check_afk_status(user_id)
 
-        if int(userc_id) == int(user_id):
-            return
+    if userc_id == user_id:
+        return
 
-        time = humanize.naturaldelta(datetime.now() - user.time)
+    time = humanize.naturaldelta(datetime.now() - user.time)
 
-        if not user.reason:
-            res = "{} is afk.\n\nLast seen {} ago.".format(
-                fst_name,
-                time,
-            )
-            await update.effective_message.reply_text(res)
-        else:
-            res = "{} is afk.\nReason: <code>{}</code>\n\nLast seen {} ago.".format(
-                html.escape(fst_name),
-                html.escape(user.reason),
-                time,
-            )
-            await update.effective_message.reply_text(res, parse_mode="html")
+    if not user.reason:
+        res = f"{fst_name} is afk.\n\nLast seen {time} ago."
+        await update.effective_message.reply_text(res)
+    else:
+        res = f"{html.escape(fst_name)} is afk.\nReason: <code>{html.escape(user.reason)}</code>\n\nLast seen {time} ago."
+        await update.effective_message.reply_text(res, parse_mode="html")
 
 
 __help__ = """

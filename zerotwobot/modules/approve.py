@@ -46,14 +46,7 @@ async def approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"[{member.user.first_name}](tg://user?id={member.user.id}) has been approved in {chat_title}! They will now be ignored by automated admin actions like locks, blocklists, and antiflood.",
         parse_mode=ParseMode.MARKDOWN,
     )
-    log_message = (
-        f"<b>{html.escape(chat.title)}:</b>\n"
-        f"#APPROVED\n"
-        f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-        f"<b>User:</b> {mention_html(member.user.id, member.user.first_name)}"
-    )
-
-    return log_message
+    return f"<b>{html.escape(chat.title)}:</b>\n#APPROVED\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\n<b>User:</b> {mention_html(member.user.id, member.user.first_name)}"
 
 
 @loggable
@@ -84,14 +77,7 @@ async def disapprove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await message.reply_text(
         f"{member.user.first_name} is no longer approved in {chat_title}.",
     )
-    log_message = (
-        f"<b>{html.escape(chat.title)}:</b>\n"
-        f"#UNAPPROVED\n"
-        f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-        f"<b>User:</b> {mention_html(member.user.id, member.user.first_name)}"
-    )
-
-    return log_message
+    return f"<b>{html.escape(chat.title)}:</b>\n#UNAPPROVED\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\n<b>User:</b> {mention_html(member.user.id, member.user.first_name)}"
 
 
 @check_admin(is_user=True)
@@ -99,19 +85,16 @@ async def approved(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     chat_title = message.chat.title
     chat = update.effective_chat
-    msg = "The following users are approved.\n"
-    approved_users = sql.list_approved(message.chat_id)
-    
-    if not approved_users:
-        await message.reply_text(f"No users are approved in {chat_title}.")
-        return ""
-
-    else:
+    if approved_users := sql.list_approved(message.chat_id):
+        msg = "The following users are approved.\n"
         for i in approved_users:
             member = await chat.get_member(int(i.user_id))
             msg += f"- `{i.user_id}`: {member.user['first_name']}\n"
-        
+
         await message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+    else:
+        await message.reply_text(f"No users are approved in {chat_title}.")
+        return ""
 
 
 @check_admin(is_user=True)

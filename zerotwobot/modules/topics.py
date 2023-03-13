@@ -74,14 +74,14 @@ from zerotwobot.modules.log_channel import loggable
 async def create_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     chat = update.effective_chat
-    user = update.effective_user
-    args = context.args
-    
     if chat.is_forum:
+        args = context.args
+
         if len(args) < 1:
             await message.reply_text("You must give a name for the topic to create.")
         else:
             name = " ".join(args)
+            user = update.effective_user
             try:
                 topic = await context.bot.create_forum_topic(chat.id, name)
                 await message.reply_text(f"Successfully created {topic.name}\nID: {topic.message_thread_id}" if topic else "Something happened")
@@ -90,14 +90,7 @@ async def create_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     text=f"Congratulations {topic.name} created successfully\nID: {topic.message_thread_id}",
                     message_thread_id=topic.message_thread_id
                 )
-                log_message = (
-                    f"<b>{html.escape(chat.title)}:</b>\n"
-                    f"#NEWTOPIC\n"
-                    f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-                    f"<b>Topic Name:</b> {topic.name}\n"
-                    f"<b>Topic ID:</b> {topic.message_thread_id}"
-                )
-                return log_message
+                return f"<b>{html.escape(chat.title)}:</b>\n#NEWTOPIC\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\n<b>Topic Name:</b> {topic.name}\n<b>Topic ID:</b> {topic.message_thread_id}"
             except BadRequest as e:
                 await message.reply_text(f"Something happened.\n{e.message}")
                 return ""
@@ -110,21 +103,15 @@ async def create_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def delete_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     chat = update.effective_chat
-    user = update.effective_user
-    args = context.args
     if chat.is_forum:
+        args = context.args
         if len(args) > 0:
+            user = update.effective_user
             try:
                 topic_chat = await context.bot.delete_forum_topic(chat.id, args[0])
                 if topic_chat:
                     await message.reply_text(f"Succesfully deleted {args[0]}")
-                    log_message = (
-                        f"<b>{html.escape(chat.title)}:</b>\n"
-                        f"#DELTOPIC\n"
-                        f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-                        f"<b>Topic ID:</b> {args[0]}"
-                    )
-                    return log_message
+                    return f"<b>{html.escape(chat.title)}:</b>\n#DELTOPIC\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\n<b>Topic ID:</b> {args[0]}"
             except BadRequest as e:
                 await message.reply_text(f"Something happened.\n{e.message}")
                 raise
@@ -140,21 +127,15 @@ async def delete_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def close_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     chat = update.effective_chat
-    user = update.effective_user
-    args = context.args
     if chat.is_forum:
+        args = context.args
         if len(args) > 0:
+            user = update.effective_user
             try:
                 topic_chat = await context.bot.close_forum_topic(chat.id, args[0])
                 if topic_chat:
                     await message.reply_text(f"Succesfully Closed {args[0]}")
-                    log_message = (
-                        f"<b>{html.escape(chat.title)}:</b>\n"
-                        f"#CLOSETOPIC\n"
-                        f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-                        f"<b>Topic ID:</b> {args[0]}"
-                    )
-                    return log_message
+                    return f"<b>{html.escape(chat.title)}:</b>\n#CLOSETOPIC\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\n<b>Topic ID:</b> {args[0]}"
             except BadRequest as e:
                 await message.reply_text(f"Something happened.\n{e.message}")
                 raise
@@ -170,21 +151,15 @@ async def close_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def open_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     chat = update.effective_chat
-    user = update.effective_user
-    args = context.args
     if chat.is_forum:
+        args = context.args
         if len(args) > 0:
+            user = update.effective_user
             try:
                 topic_chat = await context.bot.reopen_forum_topic(chat.id, args[0])
                 if topic_chat:
                     await message.reply_text(f"Succesfully Opened {args[0]}")
-                    log_message = (
-                        f"<b>{html.escape(chat.title)}:</b>\n"
-                        f"#OPENTOPIC\n"
-                        f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-                        f"<b>Topic ID:</b> {args[0]}"
-                    )
-                    return log_message
+                    return f"<b>{html.escape(chat.title)}:</b>\n#OPENTOPIC\n<b>Admin:</b> {mention_html(user.id, user.first_name)}\n<b>Topic ID:</b> {args[0]}"
             except BadRequest as e:
                 await message.reply_text(f"Something happened.\n{e.message}")
                 raise

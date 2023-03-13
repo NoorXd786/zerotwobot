@@ -9,11 +9,7 @@ from zerotwobot.modules.disable import DisableAbleCommandHandler
 
 async def totranslate(update: Update, context: ContextTypes.DEFAULT_TYPE):
    message = update.effective_message
-   problem_lang_code = []
-   for key in LANGUAGES:
-       if "-" in key:
-           problem_lang_code.append(key)
-
+   problem_lang_code = [key for key in LANGUAGES if "-" in key]
    try:
        if message.reply_to_message and not message.reply_to_message.forum_topic_created:
            args = update.effective_message.text.split(None, 1)

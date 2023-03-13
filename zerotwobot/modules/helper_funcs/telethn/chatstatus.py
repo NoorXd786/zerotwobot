@@ -64,38 +64,43 @@ async def is_user_in_chat(chat_id: int, user_id: int):
 
 
 async def can_change_info(message):
-    status = False
-    if message.chat.admin_rights:
-        status = message.chat.admin_rights.change_info
-    return status
+    return (
+        message.chat.admin_rights.change_info
+        if message.chat.admin_rights
+        else False
+    )
 
 
 async def can_ban_users(message):
-    status = False
-    if message.chat.admin_rights:
-        status = message.chat.admin_rights.ban_users
-    return status
+    return (
+        message.chat.admin_rights.ban_users
+        if message.chat.admin_rights
+        else False
+    )
 
 
 async def can_pin_messages(message):
-    status = False
-    if message.chat.admin_rights:
-        status = message.chat.admin_rights.pin_messages
-    return status
+    return (
+        message.chat.admin_rights.pin_messages
+        if message.chat.admin_rights
+        else False
+    )
 
 
 async def can_invite_users(message):
-    status = False
-    if message.chat.admin_rights:
-        status = message.chat.admin_rights.invite_users
-    return status
+    return (
+        message.chat.admin_rights.invite_users
+        if message.chat.admin_rights
+        else False
+    )
 
 
 async def can_add_admins(message):
-    status = False
-    if message.chat.admin_rights:
-        status = message.chat.admin_rights.add_admins
-    return status
+    return (
+        message.chat.admin_rights.add_admins
+        if message.chat.admin_rights
+        else False
+    )
 
 
 async def can_delete_messages(message):
@@ -103,8 +108,7 @@ async def can_delete_messages(message):
     if message.is_private:
         return True
     elif message.chat.admin_rights:
-        status = message.chat.admin_rights.delete_messages
-        return status
+        return message.chat.admin_rights.delete_messages
     else:
         return False
 
@@ -114,5 +118,4 @@ async def user_can_purge(user_id: int, message):
         return True
 
     perms = await telethn.get_permissions(message.chat_id, user_id)
-    status = perms.delete_messages
-    return status 
+    return perms.delete_messages 

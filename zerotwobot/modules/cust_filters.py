@@ -57,7 +57,7 @@ async def list_handlers(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
     conn = await connected(context.bot, update, chat, user.id, need_admin=False)
-    if not conn is False:
+    if conn is not False:
         chat_id = conn
         chat_obj = await application.bot.getChat(conn)
         chat_name = chat_obj.title
@@ -75,12 +75,12 @@ async def list_handlers(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not all_handlers:
         await send_message(
-            update.effective_message, "No filters saved in {}!".format(chat_name),
+            update.effective_message, f"No filters saved in {chat_name}!"
         )
         return
 
     for keyword in all_handlers:
-        entry = " • `{}`\n".format(escape_markdown(keyword))
+        entry = f" • `{escape_markdown(keyword)}`\n"
         if len(entry) + len(filter_list) > MessageLimit.MAX_TEXT_LENGTH:
             await send_message(
                 update.effective_message,
@@ -107,17 +107,13 @@ async def filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     buttons = None
     conn = await connected(context.bot, update, chat, user.id)
-    if not conn is False:
+    if conn is not False:
         chat_id = conn
         chat_obj = await application.bot.getChat(conn)
         chat_name = chat_obj.title
     else:
         chat_id = update.effective_chat.id
-        if chat.type == "private":
-            chat_name = "local filters"
-        else:
-            chat_name = chat.title
-
+        chat_name = "local filters" if chat.type == "private" else chat.title
     if not msg.reply_to_message and len(args) < 2:
         await send_message(
             update.effective_message,
@@ -164,24 +160,20 @@ async def filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
     if len(args) >= 2:
-        if msg.reply_to_message:
-            if msg.reply_to_message.forum_topic_created:
-                offset = len(extracted[1]) - len(msg.text)
+        if msg.reply_to_message and msg.reply_to_message.forum_topic_created:
+            offset = len(extracted[1]) - len(msg.text)
 
-                text, buttons = button_markdown_parser(
-                    extracted[1], entities=msg.parse_entities(), offset=offset
+            text, buttons = button_markdown_parser(
+                extracted[1], entities=msg.parse_entities(), offset=offset
+            )
+
+            text = text.strip()
+            if not text:
+                await send_message(
+                    update.effective_message,
+                    "There is no note message - You can't JUST have buttons, you need a message to go with it!",
                 )
-
-                text = text.strip()
-                if not text:
-                    await send_message(
-                        update.effective_message,
-                        "There is no note message - You can't JUST have buttons, you need a message to go with it!",
-                    )
-                    return
-            else:
-                pass
-
+                return
     elif msg.reply_to_message and len(args) >= 1:
         if msg.reply_to_message.text:
             text_to_parsing = msg.reply_to_message.text
@@ -239,7 +231,7 @@ async def filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if add is True:
         await send_message(
             update.effective_message,
-            "Saved filter '{}' in *{}*!".format(keyword, chat_name),
+            f"Saved filter '{keyword}' in *{chat_name}*!",
             parse_mode=ParseMode.MARKDOWN,
         )
     raise ApplicationHandlerStop
@@ -252,17 +244,13 @@ async def stop_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = update.effective_message.text.split(None, 1)
 
     conn = await connected(context.bot, update, chat, user.id)
-    if not conn is False:
+    if conn is not False:
         chat_id = conn
         chat_obj = await application.bot.getChat(conn)
         chat_name = chat_obj.title
     else:
         chat_id = update.effective_chat.id
-        if chat.type == "private":
-            chat_name = "Local filters"
-        else:
-            chat_name = chat.title
-
+        chat_name = "Local filters" if chat.type == "private" else chat.title
     if len(args) < 2:
         await send_message(update.effective_message, "What should i stop?")
         return
@@ -278,7 +266,7 @@ async def stop_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
             sql.remove_filter(chat_id, args[1])
             await send_message(
                 update.effective_message,
-                "Okay, I'll stop replying to that filter in *{}*.".format(chat_name),
+                f"Okay, I'll stop replying to that filter in *{chat_name}*.",
                 parse_mode=ParseMode.MARKDOWN,
             )
             raise ApplicationHandlerStop
@@ -291,7 +279,7 @@ async def stop_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def reply_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat = update.effective_chat  
+    chat = update.effective_chat
     message = update.effective_message  
 
     if not update.effective_user or update.effective_user.id == 777000:
@@ -324,10 +312,7 @@ async def reply_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if filt.reply_text:
                     if "%%%" in filt.reply_text:
                         split = filt.reply_text.split("%%%")
-                        if all(split):
-                            text = random.choice(split)
-                        else:
-                            text = filt.reply_text
+                        text = random.choice(split) if all(split) else filt.reply_text
                     else:
                         text = filt.reply_text
                     if text.startswith("~!") and text.endswith("!~"):
@@ -350,15 +335,11 @@ async def reply_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                     "Message couldn't be sent, Is the sticker id valid?",
                                     message_thread_id=message.message_thread_id if chat.is_forum else None
                                 )
-                                return
                             else:
-                                LOGGER.exception("Error in filters: " + excp.message)
-                                return
-                    valid_format = escape_invalid_curly_brackets(
-                        text, VALID_WELCOME_FORMATTERS,
-                    )
-                    if valid_format:
-                        filtext = valid_format.format(
+                                LOGGER.exception(f"Error in filters: {excp.message}")
+                            return
+                    filtext = (
+                        valid_format.format(
                             first=escape(message.from_user.first_name),
                             last=escape(
                                 message.from_user.last_name
@@ -372,21 +353,29 @@ async def reply_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                 if message.from_user.last_name
                                 else [escape(message.from_user.first_name)],
                             ),
-                            username="@" + escape(message.from_user.username)
+                            username=f"@{escape(message.from_user.username)}"
                             if message.from_user.username
                             else mention_html(
-                                message.from_user.id, message.from_user.first_name,
+                                message.from_user.id,
+                                message.from_user.first_name,
                             ),
                             mention=mention_html(
-                                message.from_user.id, message.from_user.first_name,
+                                message.from_user.id,
+                                message.from_user.first_name,
                             ),
                             chatname=escape(message.chat.title)
                             if message.chat.type != "private"
                             else escape(message.from_user.first_name),
                             id=message.from_user.id,
                         )
-                    else:
-                        filtext = ""
+                        if (
+                            valid_format := escape_invalid_curly_brackets(
+                                text,
+                                VALID_WELCOME_FORMATTERS,
+                            )
+                        )
+                        else ""
+                    )
                 else:
                     filtext = ""
 
@@ -399,16 +388,14 @@ async def reply_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             reply_markup=keyboard
                         )
                     except BadRequest as excp:
-                        LOGGER.exception("Error in filters: " + excp.message)
+                        LOGGER.exception(f"Error in filters: {excp.message}")
                         try:
                             await send_message(
                                 update.effective_message,
                                 get_exception(excp, filt, chat),
                             )
                         except BadRequest as excp:
-                            LOGGER.exception(
-                                "Failed to send message: " + excp.message,
-                            )
+                            LOGGER.exception(f"Failed to send message: {excp.message}")
                 else:
                     try:
                         if filt.file_type not in [sql.Types.PHOTO.value, sql.Types.VIDEO]:
@@ -434,73 +421,71 @@ async def reply_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             message,
                             "I don't have the permission to send the content of the filter.",
                         )
-                break
+            elif filt.is_sticker:
+                await message.reply_sticker(filt.reply)
+            elif filt.is_document:
+                await message.reply_document(filt.reply)
+            elif filt.is_image:
+                await message.reply_photo(filt.reply, has_spoiler=filt.has_media_spoiler)
+            elif filt.is_audio:
+                await message.reply_audio(filt.reply)
+            elif filt.is_voice:
+                await message.reply_voice(filt.reply)
+            elif filt.is_video:
+                await message.reply_video(filt.reply, has_spoiler=filt.has_media_spoiler)
+            elif filt.has_buttons:
+                buttons = sql.get_buttons(chat.id, filt.keyword)
+                keyb = build_keyboard_parser(context.bot, chat.id, buttons)
+                keyboard = InlineKeyboardMarkup(keyb)
+
+                try:
+                    await context.bot.send_message(
+                        chat.id,
+                        markdown_to_html(filt.reply),
+                        parse_mode=ParseMode.HTML,
+                        disable_web_page_preview=True,
+                        reply_markup=keyboard,
+                        message_thread_id=message.message_thread_id if chat.is_forum else None
+                    )
+                except BadRequest as excp:
+                    if excp.message == "Unsupported url protocol":
+                        try:
+                            await send_message(
+                                update.effective_message,
+                                "You seem to be trying to use an unsupported url protocol. "
+                                "Telegram doesn't support buttons for some protocols, such as tg://. Please try "
+                                "again...",
+                            )
+                        except BadRequest as excp:
+                            LOGGER.exception(f"Error in filters: {excp.message}")
+                    else:
+                        try:
+                            await send_message(
+                                update.effective_message,
+                                "This message couldn't be sent as it's incorrectly formatted.",
+                            )
+                        except BadRequest as excp:
+                            LOGGER.exception(f"Error in filters: {excp.message}")
+                        LOGGER.warning(
+                            "Message %s could not be parsed", str(filt.reply),
+                        )
+                        LOGGER.exception(
+                            "Could not parse filter %s in chat %s",
+                            str(filt.keyword),
+                            str(chat.id),
+                        )
+
             else:
-                if filt.is_sticker:
-                    await message.reply_sticker(filt.reply)
-                elif filt.is_document:
-                    await message.reply_document(filt.reply)
-                elif filt.is_image:
-                    await message.reply_photo(filt.reply, has_spoiler=filt.has_media_spoiler)
-                elif filt.is_audio:
-                    await message.reply_audio(filt.reply)
-                elif filt.is_voice:
-                    await message.reply_voice(filt.reply)
-                elif filt.is_video:
-                    await message.reply_video(filt.reply, has_spoiler=filt.has_media_spoiler)
-                elif filt.has_buttons:
-                    buttons = sql.get_buttons(chat.id, filt.keyword)
-                    keyb = build_keyboard_parser(context.bot, chat.id, buttons)
-                    keyboard = InlineKeyboardMarkup(keyb)
-
-                    try:
-                        await context.bot.send_message(
-                            chat.id,
-                            markdown_to_html(filt.reply),
-                            parse_mode=ParseMode.HTML,
-                            disable_web_page_preview=True,
-                            reply_markup=keyboard,
-                            message_thread_id=message.message_thread_id if chat.is_forum else None
-                        )
-                    except BadRequest as excp:
-                        if excp.message == "Unsupported url protocol":
-                            try:
-                                await send_message(
-                                    update.effective_message,
-                                    "You seem to be trying to use an unsupported url protocol. "
-                                    "Telegram doesn't support buttons for some protocols, such as tg://. Please try "
-                                    "again...",
-                                )
-                            except BadRequest as excp:
-                                LOGGER.exception("Error in filters: " + excp.message)
-                        else:
-                            try:
-                                await send_message(
-                                    update.effective_message,
-                                    "This message couldn't be sent as it's incorrectly formatted.",
-                                )
-                            except BadRequest as excp:
-                                LOGGER.exception("Error in filters: " + excp.message)
-                            LOGGER.warning(
-                                "Message %s could not be parsed", str(filt.reply),
-                            )
-                            LOGGER.exception(
-                                "Could not parse filter %s in chat %s",
-                                str(filt.keyword),
-                                str(chat.id),
-                            )
-
-                else:
                     # LEGACY - all new filters will have has_markdown set to True.
-                    try:
-                        await context.bot.send_message(
-                            chat.id, 
-                            filt.reply, 
-                            message_thread_id=message.message_thread_id if chat.is_forum else None
-                        )
-                    except BadRequest as excp:
-                        LOGGER.exception("Error in filters: " + excp.message)
-                break
+                try:
+                    await context.bot.send_message(
+                        chat.id, 
+                        filt.reply, 
+                        message_thread_id=message.message_thread_id if chat.is_forum else None
+                    )
+                except BadRequest as excp:
+                    LOGGER.exception(f"Error in filters: {excp.message}")
+            break
 
 
 
@@ -596,7 +581,7 @@ async def addnew_filter(update, chat_id, keyword, text, file_type, file_id, butt
 
 
 def __stats__():
-    return "• {} filters, across {} chats.".format(sql.num_filters(), sql.num_chats())
+    return f"• {sql.num_filters()} filters, across {sql.num_chats()} chats."
 
 
 async def __import_data__(chat_id, data, message):
@@ -612,7 +597,7 @@ def __migrate__(old_chat_id, new_chat_id):
 
 def __chat_settings__(chat_id, user_id):
     cust_filters = sql.get_chat_triggers(chat_id)
-    return "There are `{}` custom filters here.".format(len(cust_filters))
+    return f"There are `{len(cust_filters)}` custom filters here."
 
 
 __help__ = """

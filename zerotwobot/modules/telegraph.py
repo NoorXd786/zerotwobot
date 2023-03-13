@@ -39,8 +39,8 @@ async def telegraph(update: Update, context: ContextTypes.DEFAULT_TYPE):
         os.mkdir(TEMP_DOWNLOAD_LOC)
 
 
-    if len(args) >= 1:
-        if message.reply_to_message and not message.reply_to_message.forum_topic_created:
+    if message.reply_to_message and not message.reply_to_message.forum_topic_created:
+        if len(args) >= 1:
             start = datetime.now()
             reply_msg = message.reply_to_message
 
@@ -52,7 +52,7 @@ async def telegraph(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     file = reply_msg.video.get_file()
                     file_name = reply_msg.video.file_name
 
-                downloaded_file = file.download_to_drive(TEMP_DOWNLOAD_LOC + "/" + file_name)
+                downloaded_file = file.download_to_drive(f"{TEMP_DOWNLOAD_LOC}/{file_name}")
                 await msg.edit_text("<code>Downloaded image/video</code>", parse_mode="html")
 
                 try:
@@ -65,11 +65,11 @@ async def telegraph(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         parse_mode="markdown",
                     )
             elif args[0] == "t":
-                if user.last_name:
-                    page_title = user.first_name + " " + user.last_name
-                else:
-                    page_title = user.first_name
-
+                page_title = (
+                    f"{user.first_name} {user.last_name}"
+                    if user.last_name
+                    else user.first_name
+                )
                 text = reply_msg.text
                 text = text.replace("\n", "<br>")
 
@@ -81,9 +81,10 @@ async def telegraph(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"Successfully uploaded the Text to [telegra.ph](https://telegra.ph/{response['path']})",
                     parse_mode="markdown"
                 )
-                
 
-        elif not message.reply_to_message:
+
+    elif not message.reply_to_message:
+        if len(args) >= 1:
             await msg.edit_text("Haha! I know this trick so tag any image/video/text")
 
 

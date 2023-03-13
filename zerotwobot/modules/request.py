@@ -17,10 +17,10 @@ REQUEST_GROUP = 12
 async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     chat = update.effective_chat
-    user = update.effective_user
     args = context.args
 
     if chat.type == chat.PRIVATE:
+        user = update.effective_user
         if len(args) >= 1:
             if args[0] in ['yes', 'on']:
                 sql.set_user_setting(user.id, True)
@@ -35,20 +35,19 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await message.reply_text(f"Current request handling preference: <code>{sql.user_should_request(user.id)}</code>", parse_mode="html")
 
+    elif len(args) >= 1:
+        if args[0] in ['yes', 'on']:
+            sql.set_chat_setting(chat.id, True)
+            await message.reply_text(
+                f"Request handling has successfully turned on in {chat.title} \n Now users can request by /request command."
+            )
+        elif args[0] in ['no', 'off']:
+            sql.set_chat_setting(chat.id, False)
+            await message.reply_text(
+                f"Request handling is now turned off in {chat.title}"
+            )
     else:
-        if len(args) >= 1:
-            if args[0] in ['yes', 'on']:
-                sql.set_chat_setting(chat.id, True)
-                await message.reply_text(
-                    f"Request handling has successfully turned on in {chat.title} \n Now users can request by /request command."
-                )
-            elif args[0] in ['no', 'off']:
-                sql.set_chat_setting(chat.id, False)
-                await message.reply_text(
-                    f"Request handling is now turned off in {chat.title}"
-                )
-        else:
-            await message.reply_text(f"Current request handling preference: <code>{sql.chat_should_request(chat.id)}</code>", parse_mode="html")
+        await message.reply_text(f"Current request handling preference: <code>{sql.chat_should_request(chat.id)}</code>", parse_mode="html")
 
 @loggable
 @user_not_admin
@@ -87,7 +86,7 @@ async def request(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             if sql.user_should_request(admin.user.id):
                 try:
-                    if not chat.type == chat.SUPERGROUP:
+                    if chat.type != chat.SUPERGROUP:
                         await bot.send_message(
                             admin.user.id, msg+link, parse_mode=ParseMode.HTML, disable_web_page_preview=True
                         )
@@ -102,7 +101,7 @@ async def request(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                         if should_forward:
                             await message.forward(admin.user.id)
-                    
+
                     if chat.username and chat.type == chat.SUPERGROUP:
 
                         await bot.send_message(
@@ -116,7 +115,7 @@ async def request(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     pass
                 except BadRequest as excp:
                     LOGGER.exception("Exception while requesting content!")
-                
+
         await message.reply_text(
             f"{mention_html(user.id, user.first_name)} I've submitted your request to the admins.",
             parse_mode=ParseMode.HTML,
@@ -134,11 +133,11 @@ def __chat_settings__(chat_id, _):
 
 
 def __user_settings__(user_id):
-    if sql.user_should_request(user_id) is True:
-        text = "You will receive requests from chats you're admin."
-    else:
-        text = "You will *not* receive requests from chats you're admin."
-    return text
+    return (
+        "You will receive requests from chats you're admin."
+        if sql.user_should_request(user_id) is True
+        else "You will *not* receive requests from chats you're admin."
+    )
 
 
 SETTINGS_HANDLER = CommandHandler("requests", settings, block=False)

@@ -13,7 +13,7 @@ from telegram.ext import ContextTypes, CommandHandler
 async def allow_groups(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if not args:
-        state = "Lockdown is " + "on" if not zerotwobot.ALLOW_CHATS else "off"
+        state = "off" if zerotwobot.ALLOW_CHATS else "Lockdown is " + "on"
         await update.effective_message.reply_text(f"Current state: {state}")
         return
     if args[0].lower() in ["off", "no"]:
@@ -29,8 +29,7 @@ async def allow_groups(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @check_admin(only_dev=True)
 async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot = context.bot
-    args = context.args
-    if args:
+    if args := context.args:
         chat_id = str(args[0])
         try:
             await bot.leave_chat(int(chat_id))

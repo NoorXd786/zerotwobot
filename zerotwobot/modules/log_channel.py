@@ -22,17 +22,17 @@ if is_module_loaded(FILENAME):
     def loggable(func):
         @wraps(func)
         async def log_action(
-            update: Update,
-            context: ContextTypes.DEFAULT_TYPE,
-            job_queue: JobQueue = None,
-            *args,
-            **kwargs,
-        ):
-            if not job_queue:
-                result = await func(update, context, *args, **kwargs)
-            else:
-                result = await func(update, context, job_queue, *args, **kwargs)
-
+                update: Update,
+                context: ContextTypes.DEFAULT_TYPE,
+                job_queue: JobQueue = None,
+                *args,
+                **kwargs,
+            ):
+            result = (
+                await func(update, context, job_queue, *args, **kwargs)
+                if job_queue
+                else await func(update, context, *args, **kwargs)
+            )
             chat = update.effective_chat
             message = update.effective_message
 
@@ -42,7 +42,7 @@ if is_module_loaded(FILENAME):
 
                 if chat.is_forum and chat.username:
                     result += f'\n<b>Link:</b> <a href="https://t.me/{chat.username}/{message.message_thread_id}/{message.message_id}">click here</a>'
-            
+
                 if message.chat.type == chat.SUPERGROUP and message.chat.username:
                     result += f'\n<b>Link:</b> <a href="https://t.me/{chat.username}/{message.message_id}">click here</a>'
                 log_chat = sql.get_chat_log_channel(chat.id)
@@ -119,8 +119,7 @@ if is_module_loaded(FILENAME):
         message = update.effective_message
         chat = update.effective_chat
 
-        log_channel = sql.get_chat_log_channel(chat.id)
-        if log_channel:
+        if log_channel := sql.get_chat_log_channel(chat.id):
             log_channel_info = await bot.get_chat(log_channel)
             await message.reply_text(
                 f"This group has all it's logs sent to:"
@@ -180,8 +179,7 @@ if is_module_loaded(FILENAME):
         message = update.effective_message
         chat = update.effective_chat
 
-        log_channel = sql.stop_chat_logging(chat.id)
-        if log_channel:
+        if log_channel := sql.stop_chat_logging(chat.id):
             await bot.send_message(
                 log_channel, f"Channel has been unlinked from {chat.title}",
             )
@@ -197,8 +195,7 @@ if is_module_loaded(FILENAME):
         sql.migrate_chat(old_chat_id, new_chat_id)
 
     async def __chat_settings__(chat_id, user_id):
-        log_channel = sql.get_chat_log_channel(chat_id)
-        if log_channel:
+        if log_channel := sql.get_chat_log_channel(chat_id):
             log_channel_info = await application.bot.get_chat(log_channel)
             return f"This group has all it's logs sent to: {escape_markdown(log_channel_info.title)} (`{log_channel}`)"
         return "No log channel is set for this group!"

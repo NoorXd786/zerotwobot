@@ -29,7 +29,7 @@ async def load(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     try:
-        imported_module = importlib.import_module("zerotwobot.modules." + text)
+        imported_module = importlib.import_module(f"zerotwobot.modules.{text}")
     except:
         await load_messasge.edit_text("Does that module even exist?")
         return
@@ -47,13 +47,12 @@ async def load(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for handler in handlers:
             if not isinstance(handler, tuple):
                 application.add_handler(handler)
+            elif isinstance(handler[0], collections.Callable):
+                callback, telethon_event = handler
+                telethn.add_event_handler(callback, telethon_event)
             else:
-                if isinstance(handler[0], collections.Callable):
-                    callback, telethon_event = handler
-                    telethn.add_event_handler(callback, telethon_event)
-                else:
-                    handler_name, priority = handler
-                    application.add_handler(handler_name, priority)
+                handler_name, priority = handler
+                application.add_handler(handler_name, priority)
     else:
         IMPORTED.pop(imported_module.__mod_name__.lower())
         await load_messasge.edit_text("The module cannot be loaded.")
@@ -85,7 +84,8 @@ async def load(update: Update, context: ContextTypes.DEFAULT_TYPE):
         USER_SETTINGS[imported_module.__mod_name__.lower()] = imported_module
 
     await load_messasge.edit_text(
-        "Successfully loaded module : <b>{}</b>".format(text), parse_mode=ParseMode.HTML,
+        f"Successfully loaded module : <b>{text}</b>",
+        parse_mode=ParseMode.HTML,
     )
 
 
@@ -99,7 +99,7 @@ async def unload(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     try:
-        imported_module = importlib.import_module("zerotwobot.modules." + text)
+        imported_module = importlib.import_module(f"zerotwobot.modules.{text}")
     except:
         await unload_messasge.edit_text("Does that module even exist?")
         return
@@ -119,13 +119,12 @@ async def unload(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
             elif not isinstance(handler, tuple):
                 application.remove_handler(handler)
+            elif isinstance(handler[0], collections.Callable):
+                callback, telethon_event = handler
+                telethn.remove_event_handler(callback, telethon_event)
             else:
-                if isinstance(handler[0], collections.Callable):
-                    callback, telethon_event = handler
-                    telethn.remove_event_handler(callback, telethon_event)
-                else:
-                    handler_name, priority = handler
-                    application.remove_handler(handler_name, priority)
+                handler_name, priority = handler
+                application.remove_handler(handler_name, priority)
     else:
         await unload_messasge.edit_text("The module cannot be unloaded.")
         return

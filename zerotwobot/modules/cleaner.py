@@ -46,27 +46,29 @@ async def clean_blue_text_must_click(update: Update, context: ContextTypes.DEFAU
     chat = update.effective_chat
     message = update.effective_message
     member = await chat.get_member(bot.id)
-    
-    if isinstance(member, ChatMemberAdministrator):
-        if (
-            (member.can_delete_messages if isinstance(member, ChatMemberAdministrator) else None)
-            and sql.is_enabled(chat.id)
-        ):
-            fst_word = message.text.strip().split(None, 1)[0]
 
-            if len(fst_word) > 1 and any(
+    if isinstance(member, ChatMemberAdministrator) and (
+        (
+            member.can_delete_messages
+            if isinstance(member, ChatMemberAdministrator)
+            else None
+        )
+        and sql.is_enabled(chat.id)
+    ):
+        fst_word = message.text.strip().split(None, 1)[0]
+
+        if len(fst_word) > 1 and any(
                 fst_word.startswith(start) for start in CMD_STARTERS
             ):
 
-                command = fst_word[1:].split("@")
-                chat = update.effective_chat
+            command = fst_word[1:].split("@")
+            chat = update.effective_chat
 
-                ignored = sql.is_command_ignored(chat.id, command[0])
-                if ignored:
-                    return
+            if ignored := sql.is_command_ignored(chat.id, command[0]):
+                return
 
-                if command[0] not in command_list:
-                    await message.delete()
+            if command[0] not in command_list:
+                await message.delete()
 
 
 
@@ -80,16 +82,12 @@ async def set_blue_text_must_click(update: Update, context: ContextTypes.DEFAULT
         val = args[0].lower()
         if val in ("off", "no"):
             sql.set_cleanbt(chat.id, False)
-            reply = "Bluetext cleaning has been disabled for <b>{}</b>".format(
-                html.escape(chat.title),
-            )
+            reply = f"Bluetext cleaning has been disabled for <b>{html.escape(chat.title)}</b>"
             await message.reply_text(reply, parse_mode=ParseMode.HTML)
 
         elif val in ("yes", "on"):
             sql.set_cleanbt(chat.id, True)
-            reply = "Bluetext cleaning has been enabled for <b>{}</b>".format(
-                html.escape(chat.title),
-            )
+            reply = f"Bluetext cleaning has been enabled for <b>{html.escape(chat.title)}</b>"
             await message.reply_text(reply, parse_mode=ParseMode.HTML)
 
         else:
@@ -98,9 +96,7 @@ async def set_blue_text_must_click(update: Update, context: ContextTypes.DEFAULT
     else:
         clean_status = sql.is_enabled(chat.id)
         clean_status = "Enabled" if clean_status else "Disabled"
-        reply = "Bluetext cleaning for <b>{}</b> : <b>{}</b>".format(
-            html.escape(chat.title), clean_status,
-        )
+        reply = f"Bluetext cleaning for <b>{html.escape(chat.title)}</b> : <b>{clean_status}</b>"
         await message.reply_text(reply, parse_mode=ParseMode.HTML)
 
 
@@ -112,11 +108,8 @@ async def add_bluetext_ignore(update: Update, context: ContextTypes.DEFAULT_TYPE
     args = context.args
     if len(args) >= 1:
         val = args[0].lower()
-        added = sql.chat_ignore_command(chat.id, val)
-        if added:
-            reply = "<b>{}</b> has been added to bluetext cleaner ignore list.".format(
-                args[0],
-            )
+        if added := sql.chat_ignore_command(chat.id, val):
+            reply = f"<b>{args[0]}</b> has been added to bluetext cleaner ignore list."
         else:
             reply = "Command is already ignored."
         await message.reply_text(reply, parse_mode=ParseMode.HTML)
@@ -134,13 +127,8 @@ async def remove_bluetext_ignore(update: Update, context: ContextTypes.DEFAULT_T
     args = context.args
     if len(args) >= 1:
         val = args[0].lower()
-        removed = sql.chat_unignore_command(chat.id, val)
-        if removed:
-            reply = (
-                "<b>{}</b> has been removed from bluetext cleaner ignore list.".format(
-                    args[0],
-                )
-            )
+        if removed := sql.chat_unignore_command(chat.id, val):
+            reply = f"<b>{args[0]}</b> has been removed from bluetext cleaner ignore list."
         else:
             reply = "Command isn't ignored currently."
         await message.reply_text(reply, parse_mode=ParseMode.HTML)
@@ -157,11 +145,8 @@ async def add_bluetext_ignore_global(update: Update, context: ContextTypes.DEFAU
     args = context.args
     if len(args) >= 1:
         val = args[0].lower()
-        added = sql.global_ignore_command(val)
-        if added:
-            reply = "<b>{}</b> has been added to global bluetext cleaner ignore list.".format(
-                args[0],
-            )
+        if added := sql.global_ignore_command(val):
+            reply = f"<b>{args[0]}</b> has been added to global bluetext cleaner ignore list."
         else:
             reply = "Command is already ignored."
         await message.reply_text(reply, parse_mode=ParseMode.HTML)
@@ -178,11 +163,8 @@ async def remove_bluetext_ignore_global(update: Update, context: ContextTypes.DE
     args = context.args
     if len(args) >= 1:
         val = args[0].lower()
-        removed = sql.global_unignore_command(val)
-        if removed:
-            reply = "<b>{}</b> has been removed from global bluetext cleaner ignore list.".format(
-                args[0],
-            )
+        if removed := sql.global_unignore_command(val):
+            reply = f"<b>{args[0]}</b> has been removed from global bluetext cleaner ignore list."
         else:
             reply = "Command isn't ignored currently."
         await message.reply_text(reply, parse_mode=ParseMode.HTML)

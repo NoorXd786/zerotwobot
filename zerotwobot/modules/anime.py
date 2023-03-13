@@ -23,7 +23,7 @@ close_btn = "Close ❌"
 def shorten(description, info="anilist.co"):
     msg = ""
     if len(description) > 700:
-        description = description[0:500] + "...."
+        description = f"{description[:500]}...."
         msg += f"\n*Description*: {description} [Read More]({info})"
     else:
         msg += f"\n*Description*:{description}"
@@ -34,16 +34,16 @@ def shorten(description, info="anilist.co"):
 def t(milliseconds: int) -> str:
     """Inputs time in milliseconds, to get beautified time,
     as string"""
-    seconds, milliseconds = divmod(int(milliseconds), 1000)
+    seconds, milliseconds = divmod(milliseconds, 1000)
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
     tmp = (
-        ((str(days) + " Days, ") if days else "")
-        + ((str(hours) + " Hours, ") if hours else "")
-        + ((str(minutes) + " Minutes, ") if minutes else "")
-        + ((str(seconds) + " Seconds, ") if seconds else "")
-        + ((str(milliseconds) + " ms, ") if milliseconds else "")
+        (f"{str(days)} Days, " if days else "")
+        + (f"{str(hours)} Hours, " if hours else "")
+        + (f"{str(minutes)} Minutes, " if minutes else "")
+        + (f"{str(seconds)} Seconds, " if seconds else "")
+        + (f"{str(milliseconds)} ms, " if milliseconds else "")
     )
     return tmp[:-2]
 
@@ -168,9 +168,7 @@ async def extract_arg(message: Message):
     if len(split) > 1:
         return split[1]
     reply = message.reply_to_message
-    if reply is not None and not reply.forum_topic_created:
-        return reply.text
-    return None
+    return None if reply is None or reply.forum_topic_created else reply.text
 
 
 async def airing(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -186,7 +184,7 @@ async def airing(update: Update, context: ContextTypes.DEFAULT_TYPE):
         r = await client.post(
         url, json={"query": airing_query, "variables": variables},
     )
-    if not r.status_code in [401, 404, 500, 503]:
+    if r.status_code not in [401, 404, 500, 503]:
         response = r.json()["data"]["Media"]
     else:
         await update.effective_message.reply_text("Umm that didn't work!")
@@ -235,7 +233,7 @@ async def anime(update: Update, context: ContextTypes.DEFAULT_TYPE):
             trailer_id = trailer.get("id", None)
             site = trailer.get("site", None)
             if site == "youtube":
-                trailer = "https://youtu.be/" + trailer_id
+                trailer = f"https://youtu.be/{trailer_id}"
         description = (
             json.get("description", "N/A")
             .replace("<i>", "")
@@ -243,7 +241,6 @@ async def anime(update: Update, context: ContextTypes.DEFAULT_TYPE):
             .replace("<br>", "")
         )
         msg += shorten(description, info)
-        image = f"https://img.anili.st/media/{anime_id}"
         if trailer:
             buttons = [
                 [
@@ -253,7 +250,7 @@ async def anime(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         else:
             buttons = [[InlineKeyboardButton("More Info", url=info)]]
-        if image:
+        if image := f"https://img.anili.st/media/{anime_id}":
             try:
                 await update.effective_message.reply_photo(
                     photo=image,
@@ -299,8 +296,7 @@ async def character(update: Update, context: ContextTypes.DEFAULT_TYPE):
         description = f"{json['description']}"
         site_url = json.get("siteUrl")
         msg += shorten(description, site_url)
-        image = json.get("image", None)
-        if image:
+        if image := json.get("image", None):
             image = image.get("large")
             await update.effective_message.reply_photo(
                 photo=image,
@@ -496,9 +492,7 @@ async def site_search(update: Update, context: ContextTypes.DEFAULT_TYPE, site: 
             r = await client.get(search_url)
         html_text = r.text
         soup = bs4.BeautifulSoup(html_text, "html.parser")
-        search_result = soup.find_all("h2", {"class": "post-title"})
-
-        if search_result:
+        if search_result := soup.find_all("h2", {"class": "post-title"}):
             result = f"<b>Search results for</b> <code>{html.escape(search_query)}</code> <b>on</b> @KaizokuAnime: \n"
             for entry in search_result:
                 post_link = "https://animekaizoku.com/" + entry.a["href"]

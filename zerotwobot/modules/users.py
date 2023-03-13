@@ -29,9 +29,7 @@ async def get_user_id(username: str) -> Union[int, None]:
     if len(username) <= 5:
         return None
 
-    if username.startswith("@"):
-        username = username[1:]
-
+    username = username.removeprefix("@")
     users = sql.get_userid_by_name(username)
 
     if not users:
@@ -48,9 +46,7 @@ async def get_user_id(username: str) -> Union[int, None]:
                     return userdat.id
 
             except BadRequest as excp:
-                if excp.message == "Chat not found":
-                    pass
-                else:
+                if excp.message != "Chat not found":
                     LOGGER.exception("Error extracting user ID")
 
     return None
@@ -134,9 +130,7 @@ async def chats(update: Update, context: ContextTypes.DEFAULT_TYPE):
             curr_chat = await context.bot.getChat(chat.chat_id)
             bot_member = await curr_chat.get_member(context.bot.id)
             chat_members = await curr_chat.get_member_count(context.bot.id)
-            chatfile += "{}. {} | {} | {}\n".format(
-                P, chat.chat_name, chat.chat_id, chat_members,
-            )
+            chatfile += f"{P}. {chat.chat_name} | {chat.chat_id} | {chat_members}\n"
             P = P + 1
         except:
             pass
@@ -155,9 +149,11 @@ async def chat_checker(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot = context.bot
     try:
         bot_admin = await update.effective_message.chat.get_member(bot.id)
-        if isinstance(bot_admin, ChatMemberAdministrator):
-            if bot_admin.can_post_messages is False:
-                await bot.leaveChat(update.effective_message.chat.id)
+        if (
+            isinstance(bot_admin, ChatMemberAdministrator)
+            and bot_admin.can_post_messages is False
+        ):
+            await bot.leaveChat(update.effective_message.chat.id)
     except Forbidden:
         pass
 
