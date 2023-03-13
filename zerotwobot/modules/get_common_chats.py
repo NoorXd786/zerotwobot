@@ -29,9 +29,7 @@ async def get_user_common_chats(update: Update, context: ContextTypes.DEFAULT_TY
                 chat_id = chat_obj.id
             await asyncio.sleep(0.3)
             text += f"• <code>{chat_name} | {chat_id}</code>\n"
-        except BadRequest:
-            pass
-        except Forbidden:
+        except (BadRequest, Forbidden):
             pass
         except RetryAfter as e:
             await asyncio.sleep(e.retry_after)

@@ -35,21 +35,13 @@ def get_note_type(msg: Message):
             entities=msg.parse_entities() or msg.parse_caption_entities(),
             offset=offset,
         )
-        if buttons:
-            data_type = Types.BUTTON_TEXT
-        else:
-            data_type = Types.TEXT
-
+        data_type = Types.BUTTON_TEXT if buttons else Types.TEXT
     elif msg.reply_to_message and not msg.reply_to_message.forum_topic_created:
         entities = msg.reply_to_message.parse_entities()
         msgtext = msg.reply_to_message.text or msg.reply_to_message.caption
         if len(args) >= 2 and msg.reply_to_message.text:  # not caption, text
             text, buttons = button_markdown_parser(msgtext, entities=entities)
-            if buttons:
-                data_type = Types.BUTTON_TEXT
-            else:
-                data_type = Types.TEXT
-
+            data_type = Types.BUTTON_TEXT if buttons else Types.TEXT
         elif msg.reply_to_message.sticker:
             content = msg.reply_to_message.sticker.file_id
             data_type = Types.STICKER
@@ -90,10 +82,7 @@ def get_welcome_type(msg: Message):
 
     try:
         if msg.reply_to_message and not msg.reply_to_message.forum_topic_created:
-            if msg.reply_to_message.text:
-                args = msg.reply_to_message.text
-            else:
-                args = msg.reply_to_message.caption
+            args = msg.reply_to_message.text or msg.reply_to_message.caption
         else:
             args = msg.text.split(
                 None, 1,
@@ -132,7 +121,7 @@ def get_welcome_type(msg: Message):
             text = msg.reply_to_message.caption
             data_type = Types.VIDEO
 
-        elif msg.reply_to_message and msg.reply_to_message.video_note:
+        elif msg.reply_to_message.video_note:
             content = msg.reply_to_message.video_note.file_id
             text = None
             data_type = Types.VIDEO_NOTE
@@ -141,9 +130,7 @@ def get_welcome_type(msg: Message):
     # determine what the contents of the filter are - text, image, sticker, etc
     if args:
         if msg.reply_to_message and not msg.reply_to_message.forum_topic_created:
-            argumen = (
-                msg.reply_to_message.caption if msg.reply_to_message.caption else ""
-            )
+            argumen = msg.reply_to_message.caption or ""
             offset = 0  # offset is no need since target was in reply
             entities = msg.reply_to_message.parse_entities()
         else:
@@ -156,12 +143,8 @@ def get_welcome_type(msg: Message):
             argumen, entities=entities, offset=offset,
         )
 
-    if not data_type:
-        if text and buttons:
-            data_type = Types.BUTTON_TEXT
-        elif text:
-            data_type = Types.TEXT
-
+    if not data_type and text:
+        data_type = Types.BUTTON_TEXT if buttons else Types.TEXT
     return text, data_type, content, buttons
 
 
@@ -177,7 +160,7 @@ def get_filter_type(msg: Message):
         text = msg.text.split(None, 2)[2]
         data_type = Types.TEXT
         media_spoiler = None
-    elif msg.reply_to_message and not msg.reply_to_message.forum_topic_created:    
+    elif msg.reply_to_message:    
         if (
             msg.reply_to_message.text
             and len(msg.text.split()) >= 2

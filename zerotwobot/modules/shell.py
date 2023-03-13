@@ -21,8 +21,7 @@ async def shell(update: Update, context: ContextTypes.DEFAULT_TYPE):
     stdout, stderr = process.communicate()
     reply = ""
     stderr = stderr.decode()
-    stdout = stdout.decode()
-    if stdout:
+    if stdout := stdout.decode():
         reply += f"*Stdout*\n`{stdout}`\n"
         LOGGER.info(f"Shell - {cmd} - {stdout}")
     if stderr:
@@ -39,7 +38,7 @@ async def shell(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chat_id=message.chat_id,
                 message_thread_id=message.message_thread_id if chat.is_forum else None
             )
-        
+
         if os.path.isfile("shell_ouput.txt"):
             os.remove("shell_output.txt")
     else:

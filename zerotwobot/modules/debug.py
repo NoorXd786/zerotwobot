@@ -24,11 +24,10 @@ async def debug(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif args[1] in ("no", "off"):
             DEBUG_MODE = False
             await message.reply_text("Debug mode is now off.")
+    elif DEBUG_MODE:
+        await message.reply_text("Debug mode is currently on.")
     else:
-        if DEBUG_MODE:
-            await message.reply_text("Debug mode is currently on.")
-        else:
-            await message.reply_text("Debug mode is currently off.")
+        await message.reply_text("Debug mode is currently off.")
 
 
 @telethn.on(events.NewMessage(pattern="[/!].*"))
@@ -39,7 +38,7 @@ async def i_do_nothing_yes(event):
             with open("updates.txt", "r") as f:
                 text = f.read()
             with open("updates.txt", "w+") as f:
-                f.write(text + f"\n-{event.from_id} ({event.chat_id}) : {event.text}")
+                f.write(f"{text}\n-{event.from_id} ({event.chat_id}) : {event.text}")
         else:
             with open("updates.txt", "w+") as f:
                 f.write(

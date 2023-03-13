@@ -96,7 +96,7 @@ async def new_fed(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     fednam = message.text.split(None, 1)[1]
-    if not fednam == "":
+    if fednam != "":
         fed_id = str(uuid.uuid4())
         fed_name = fednam
         LOGGER.info(fed_id)
@@ -113,17 +113,13 @@ async def new_fed(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         await update.effective_message.reply_text(
-            "*You have succeeded in creating a new federation!*"
-            "\nName: `{}`"
-            "\nID: `{}`"
-            "\n\nUse the command below to join the federation:"
-            "\n`/joinfed {}`".format(fed_name, fed_id, fed_id),
+            f"*You have succeeded in creating a new federation!*\nName: `{fed_name}`\nID: `{fed_id}`\n\nUse the command below to join the federation:\n`/joinfed {fed_id}`",
             parse_mode=ParseMode.MARKDOWN,
         )
         try:
             await bot.send_message(
                 EVENT_LOGS,
-                "New Federation: <b>{}</b>\nID: <pre>{}</pre>".format(fed_name, fed_id),
+                f"New Federation: <b>{fed_name}</b>\nID: <pre>{fed_id}</pre>",
                 parse_mode=ParseMode.HTML,
             )
         except:
@@ -164,19 +160,21 @@ async def del_fed(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.effective_message.reply_text(
-        "You sure you want to delete your federation? This cannot be reverted, you will lose your entire ban list, and '{}' will be permanently lost.".format(
-            getinfo["fname"],
-        ),
+        f"""You sure you want to delete your federation? This cannot be reverted, you will lose your entire ban list, and '{getinfo["fname"]}' will be permanently lost.""",
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
                         text="⚠️ Delete Federation ⚠️",
-                        callback_data="rmfed_{}".format(fed_id),
-                    ),
+                        callback_data=f"rmfed_{fed_id}",
+                    )
                 ],
-                [InlineKeyboardButton(text="Cancel", callback_data="rmfed_cancel")],
-            ],
+                [
+                    InlineKeyboardButton(
+                        text="Cancel", callback_data="rmfed_cancel"
+                    )
+                ],
+            ]
         ),
     )
 
@@ -225,9 +223,7 @@ async def fed_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     info = sql.get_fed_info(fed_id)
 
-    text = "This group is part of the following federation:"
-    text += "\n{} (ID: <code>{}</code>)".format(info["fname"], fed_id)
-
+    text = f'This group is part of the following federation:\n{info["fname"]} (ID: <code>{fed_id}</code>)'
     await update.effective_message.reply_text(text, parse_mode=ParseMode.HTML)
 
 
@@ -248,19 +244,14 @@ async def join_fed(update: Update, context: ContextTypes.DEFAULT_TYPE):
     administrators = await chat.get_administrators()
     fed_id = sql.get_fed_id(chat.id)
 
-    if user.id in DRAGONS:
-        pass
-    else:
+    if user.id not in DRAGONS:
         for admin in administrators:
             status = admin.status
-            if status == "creator":
-                if str(admin.user.id) == str(user.id):
-                    pass
-                else:
-                    await update.effective_message.reply_text(
-                        "Only group creators can use this command!",
-                    )
-                    return
+            if status == "creator" and str(admin.user.id) != str(user.id):
+                await update.effective_message.reply_text(
+                    "Only group creators can use this command!",
+                )
+                return
     if fed_id:
         await message.reply_text("You cannot join two federations from one chat")
         return
@@ -279,19 +270,18 @@ async def join_fed(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         get_fedlog = await sql.get_fed_log(args[0])
-        if get_fedlog:
-            if ast.literal_eval(get_fedlog):
-                await bot.send_message(
-                    get_fedlog,
-                    "Chat *{}* has joined the federation *{}*".format(
-                        chat.title, getfed["fname"],
-                    ),
-                    parse_mode="markdown",
-                    message_thread_id=message.message_thread_id if chat.is_forum else None
-                )
+        if get_fedlog and ast.literal_eval(get_fedlog):
+            await bot.send_message(
+                get_fedlog,
+                f'Chat *{chat.title}* has joined the federation *{getfed["fname"]}*',
+                parse_mode="markdown",
+                message_thread_id=message.message_thread_id
+                if chat.is_forum
+                else None,
+            )
 
         await message.reply_text(
-            "This group has joined the federation: {}!".format(getfed["fname"]),
+            f'This group has joined the federation: {getfed["fname"]}!'
         )
 
 
@@ -316,19 +306,18 @@ async def leave_fed(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if getuser in "creator" or user.id in DRAGONS:
         if sql.chat_leave_fed(chat.id) is True:
             get_fedlog = await sql.get_fed_log(fed_id)
-            if get_fedlog:
-                if ast.literal_eval(get_fedlog):
-                    await bot.send_message(
-                        get_fedlog,
-                        "Chat *{}* has left the federation *{}*".format(
-                            chat.title, fed_info["fname"],
-                        ),
-                        parse_mode="markdown",
-                        message_thread_id=update.effective_message.message_thread_id if chat.is_forum else None
-                    )
+            if get_fedlog and ast.literal_eval(get_fedlog):
+                await bot.send_message(
+                    get_fedlog,
+                    f'Chat *{chat.title}* has left the federation *{fed_info["fname"]}*',
+                    parse_mode="markdown",
+                    message_thread_id=update.effective_message.message_thread_id
+                    if chat.is_forum
+                    else None,
+                )
             await send_message(
                 update.effective_message,
-                "This group has left the federation {}!".format(fed_info["fname"]),
+                f'This group has left the federation {fed_info["fname"]}!',
             )
         else:
             await update.effective_message.reply_text(
@@ -378,12 +367,11 @@ async def user_join_fed(update: Update, context: ContextTypes.DEFAULT_TYPE):
         info = sql.get_fed_info(fed_id)
         get_owner = ast.literal_eval(info["fusers"])["owner"]
         get_owner = await bot.get_chat(get_owner)
-        if isinstance(get_owner, ChatMember):
-            if user_id == get_owner.id:
-                await update.effective_message.reply_text(
-                    "You do know that the user is the federation owner, right? RIGHT?",
-                )
-                return
+        if isinstance(get_owner, ChatMember) and user_id == get_owner.id:
+            await update.effective_message.reply_text(
+                "You do know that the user is the federation owner, right? RIGHT?",
+            )
+            return
         if getuser:
             await update.effective_message.reply_text(
                 "I cannot promote users who are already federation admins! Can remove them if you want!",
@@ -394,8 +382,7 @@ async def user_join_fed(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "I already am a federation admin in all federations!",
             )
             return
-        res = sql.user_join_fed(fed_id, user_id)
-        if res:
+        if res := sql.user_join_fed(fed_id, user_id):
             await update.effective_message.reply_text("Successfully Promoted!")
         else:
             await update.effective_message.reply_text("Failed to promote!")
@@ -470,7 +457,6 @@ async def fed_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if args:
         fed_id = args[0]
-        info = sql.get_fed_info(fed_id)
     else:
         if chat.type == 'private':
             await send_message(
@@ -483,15 +469,14 @@ async def fed_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 update.effective_message, "This group is not in any federation!",
             )
             return
-        info = sql.get_fed_info(fed_id)
-
+    info = sql.get_fed_info(fed_id)
     if is_user_fed_admin(fed_id, user.id) is False:
         await update.effective_message.reply_text("Only a federation admin can do this!")
         return
 
     owner = await bot.get_chat(info["owner"])
     try:
-        owner_name = owner.first_name + " " + owner.last_name
+        owner_name = f"{owner.first_name} {owner.last_name}"
     except:
         owner_name = owner.first_name
     FEDADMIN = sql.all_fed_users(fed_id)
@@ -501,17 +486,14 @@ async def fed_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     info = sql.get_fed_info(fed_id)
 
-    text = "<b>ℹ️ Federation Information:</b>"
-    text += "\nFedID: <code>{}</code>".format(fed_id)
-    text += "\nName: {}".format(info["fname"])
-    text += "\nCreator: {}".format(mention_html(owner.id, owner_name))
-    text += "\nAll Admins: <code>{}</code>".format(TotalAdminFed)
+    text = f"<b>ℹ️ Federation Information:</b>\nFedID: <code>{fed_id}</code>"
+    text += f'\nName: {info["fname"]}'
+    text += f"\nCreator: {mention_html(owner.id, owner_name)}"
+    text += f"\nAll Admins: <code>{TotalAdminFed}</code>"
     getfban = sql.get_all_fban_users(fed_id)
-    text += "\nTotal banned users: <code>{}</code>".format(len(getfban))
+    text += f"\nTotal banned users: <code>{len(getfban)}</code>"
     getfchat = sql.all_fed_chats(fed_id)
-    text += "\nNumber of groups in this federation: <code>{}</code>".format(
-        len(getfchat),
-    )
+    text += f"\nNumber of groups in this federation: <code>{len(getfchat)}</code>"
 
     await update.effective_message.reply_text(text, parse_mode=ParseMode.HTML)
 
@@ -543,14 +525,13 @@ async def fed_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     info = sql.get_fed_info(fed_id)
 
-    text = "<b>Federation Admin {}:</b>\n\n".format(info["fname"])
-    text += "👑 Owner:\n"
+    text = f'<b>Federation Admin {info["fname"]}:</b>\n\n' + "👑 Owner:\n"
     owner = await bot.get_chat(info["owner"])
     try:
-        owner_name = owner.first_name + " " + owner.last_name
+        owner_name = f"{owner.first_name} {owner.last_name}"
     except:
         owner_name = owner.first_name
-    text += " • {}\n".format(mention_html(owner.id, owner_name))
+    text += f" • {mention_html(owner.id, owner_name)}\n"
 
     members = sql.all_fed_members(fed_id)
     if len(members) == 0:
@@ -559,7 +540,7 @@ async def fed_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text += "\n🔱 Admin:\n"
         for x in members:
             user = await bot.get_chat(x)
-            text += " • {}\n".format(mention_html(user.id, user.first_name))
+            text += f" • {mention_html(user.id, user.first_name)}\n"
 
     await update.effective_message.reply_text(text, parse_mode=ParseMode.HTML)
 

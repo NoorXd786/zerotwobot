@@ -103,14 +103,13 @@ async def rban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat = await bot.get_chat(chat_id.split()[0])
     except BadRequest as excp:
-        if excp.message == "Chat not found":
-            await message.reply_text(
-                "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
-            )
-            return
-        else:
+        if excp.message != "Chat not found":
             raise
 
+        await message.reply_text(
+            "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
+        )
+        return
     if chat.type == "private":
         await message.reply_text("I'm sorry, but that's a private chat!")
         return
@@ -132,12 +131,11 @@ async def rban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         member = await chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            await message.reply_text("I can't seem to find this user")
-            return
-        else:
+        if excp.message != "User not found":
             raise
 
+        await message.reply_text("I can't seem to find this user")
+        return
     if await is_user_ban_protected(chat, user_id, member):
         await message.reply_text("I really wish I could ban admins...")
         return
@@ -189,18 +187,17 @@ async def runban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat = await bot.get_chat(chat_id.split()[0])
     except BadRequest as excp:
-        if excp.message == "Chat not found":
-            await message.reply_text(
-                "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
-            )
-            return
-        else:
+        if excp.message != "Chat not found":
             raise
 
+        await message.reply_text(
+            "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
+        )
+        return
     if chat.type == "private":
         await message.reply_text("I'm sorry, but that's a private chat!")
         return
-    
+
     bot_member = await chat.get_member(bot.id)
 
     if isinstance(bot_member, ChatMemberAdministrator):
@@ -218,12 +215,11 @@ async def runban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         member = await chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            await message.reply_text("I can't seem to find this user there")
-            return
-        else:
+        if excp.message != "User not found":
             raise
 
+        await message.reply_text("I can't seem to find this user there")
+        return
     if await is_user_in_chat(chat, user_id):
         await message.reply_text(
             "Why are you trying to remotely unban someone that's already in that chat?",
@@ -276,14 +272,13 @@ async def rkick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat = await bot.get_chat(chat_id.split()[0])
     except BadRequest as excp:
-        if excp.message == "Chat not found":
-            await message.reply_text(
-                "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
-            )
-            return
-        else:
+        if excp.message != "Chat not found":
             raise
 
+        await message.reply_text(
+            "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
+        )
+        return
     if chat.type == "private":
         await message.reply_text("I'm sorry, but that's a private chat!")
         return
@@ -305,12 +300,11 @@ async def rkick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         member = await chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            await message.reply_text("I can't seem to find this user")
-            return
-        else:
+        if excp.message != "User not found":
             raise
 
+        await message.reply_text("I can't seem to find this user")
+        return
     if await is_user_ban_protected(chat, user_id, member):
         await message.reply_text("I really wish I could kick admins...")
         return
@@ -361,14 +355,13 @@ async def rmute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat = await bot.get_chat(chat_id.split()[0])
     except BadRequest as excp:
-        if excp.message == "Chat not found":
-            await message.reply_text(
-                "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
-            )
-            return
-        else:
+        if excp.message != "Chat not found":
             raise
 
+        await message.reply_text(
+            "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
+        )
+        return
     if chat.type == "private":
         await message.reply_text("I'm sorry, but that's a private chat!")
         return
@@ -390,12 +383,11 @@ async def rmute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         member = await chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            await message.reply_text("I can't seem to find this user")
-            return
-        else:
+        if excp.message != "User not found":
             raise
 
+        await message.reply_text("I can't seem to find this user")
+        return
     if await is_user_ban_protected(chat, user_id, member):
         await message.reply_text("I really wish I could mute admins...")
         return
@@ -448,14 +440,13 @@ async def runmute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat = await bot.get_chat(chat_id.split()[0])
     except BadRequest as excp:
-        if excp.message == "Chat not found":
-            await message.reply_text(
-                "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
-            )
-            return
-        else:
+        if excp.message != "Chat not found":
             raise
 
+        await message.reply_text(
+            "Chat not found! Make sure you entered a valid chat ID and I'm part of that chat.",
+        )
+        return
     if chat.type == "private":
         await message.reply_text("I'm sorry, but that's a private chat!")
         return
@@ -477,22 +468,23 @@ async def runmute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         member = await chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            await message.reply_text("I can't seem to find this user there")
-            return
-        else:
+        if excp.message != "User not found":
             raise
 
-    if await is_user_in_chat(chat, user_id):
-        if ((
+        await message.reply_text("I can't seem to find this user there")
+        return
+    if await is_user_in_chat(chat, user_id) and (
+        (
             member.can_send_messages
             and member.can_send_media_messages
             and member.can_send_other_messages
             and member.can_add_web_page_previews
-        ) if isinstance(member, ChatMemberRestricted) else None
-        ):
-            await message.reply_text("This user already has the right to speak in that chat.")
-            return
+        )
+        if isinstance(member, ChatMemberRestricted)
+        else None
+    ):
+        await message.reply_text("This user already has the right to speak in that chat.")
+        return
 
     if user_id == bot.id:
         await message.reply_text("I'm not gonna UNMUTE myself, I'm an admin there!")

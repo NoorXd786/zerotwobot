@@ -47,7 +47,12 @@ def check_admin(
 
 
 
-            if chat.type == ChatType.PRIVATE and not (only_dev or only_sudo or only_owner):
+            if (
+                chat.type == ChatType.PRIVATE
+                and not only_dev
+                and not only_sudo
+                and not only_owner
+            ):
                 return await func(update, context, *args, **kwargs)
 
             bot_member = await chat.get_member(context.bot.id) if is_bot or is_both else None
@@ -66,16 +71,16 @@ def check_admin(
                         "Hey little kid"
                         "\nWho the hell are you to say me what to execute on my server?",
                     )
-                    
+
             if only_sudo:
                 if user.id in DRAGONS:
                     return await func(update, context, *args, **kwargs)
                 else:
                     return await update.effective_message.reply_text("Who the hell are you to say me what to do?",)
-            
+
             if message.from_user.id == 1087968824:
                 return await func(update, context, *args, **kwargs)
-              
+
             if permission:
                 no_permission = permission.replace("_", " ").replace("can", "")
                 if is_bot:
@@ -131,11 +136,9 @@ def check_admin(
                     else:
                         return await message.reply_text("You are not admin here.")
                 elif is_both:
-                    if bot_member.status == ChatMemberStatus.ADMINISTRATOR:
-                        pass
-                    else:
+                    if bot_member.status != ChatMemberStatus.ADMINISTRATOR:
                         return await message.reply_text("I'm not admin here.")
-                        
+
                     if user_member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
                         pass
                     elif user.id in DRAGONS:
@@ -143,7 +146,9 @@ def check_admin(
                     else:
                         return await message.reply_text("You are not admin here.")
                     return await func(update, context, *args, **kwargs)
+
         return wrapped
+
     return wrapper
 
 
@@ -160,28 +165,27 @@ async def is_user_admin(chat: Chat, user_id: int, member: ChatMember = None) -> 
         chat.type == "private"
         or user_id in DRAGONS
         or user_id in DEV_USERS
-        or user_id in [777000, 1087968824]
+        or user_id in {777000, 1087968824}
     ):  # Count telegram and Group Anonymous as admin
         return True
-    if not member:
-        with THREAD_LOCK:
-            # try to fetch from cache first.
-            try:
-                return user_id in ADMIN_CACHE[chat.id]
-            except KeyError:
-                # keyerror happend means cache is deleted,
-                # so query bot api again and return user status
-                # while saving it in cache for future usage...
-                try:
-                    chat_admins = await application.bot.getChatAdministrators(chat.id)
-                except Forbidden:
-                    return False
-                admin_list = [x.user.id for x in chat_admins]
-                ADMIN_CACHE[chat.id] = admin_list
-
-                return user_id in admin_list
-    else:
+    if member:
         return member.status in (ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER)
+    with THREAD_LOCK:
+        # try to fetch from cache first.
+        try:
+            return user_id in ADMIN_CACHE[chat.id]
+        except KeyError:
+            # keyerror happend means cache is deleted,
+            # so query bot api again and return user status
+            # while saving it in cache for future usage...
+            try:
+                chat_admins = await application.bot.getChatAdministrators(chat.id)
+            except Forbidden:
+                return False
+            admin_list = [x.user.id for x in chat_admins]
+            ADMIN_CACHE[chat.id] = admin_list
+
+            return user_id in admin_list
 
 
 async def is_bot_admin(chat: Chat, bot_id: int, bot_member: ChatMember = None) -> bool:
@@ -204,7 +208,7 @@ async def is_user_ban_protected(chat: Chat, user_id: int, member: ChatMember = N
         chat.type == "private"
         or user_id in DRAGONS
         or user_id in DEV_USERS
-        or user_id in [777000, 1087968824]
+        or user_id in {777000, 1087968824}
     ):  # Count telegram and Group Anonymous as admin
         return True
 

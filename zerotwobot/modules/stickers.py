@@ -62,14 +62,14 @@ async def cb_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def getsticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    bot = context.bot
     msg = update.effective_message
-    chat = update.effective_chat
-    user = update.effective_user
     if msg.reply_to_message and msg.reply_to_message.sticker:
         file_id = msg.reply_to_message.sticker.file_id
+        bot = context.bot
         new_file = await bot.get_file(file_id)
+        user = update.effective_user
         await new_file.download_to_drive(f"sticker_{user.id}.png")
+        chat = update.effective_chat
         await bot.send_document(
             chat.id, 
             document=open(f"sticker_{user.id}.png", "rb"),

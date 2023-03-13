@@ -95,7 +95,7 @@ async def pat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     message = update.effective_message
 
-    reply_to = message.reply_to_message if message.reply_to_message else message
+    reply_to = message.reply_to_message or message
 
     curr_user = html.escape(message.from_user.first_name)
     user_id = await extract_user(message, context, args)
@@ -139,10 +139,11 @@ async def roll(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def shout(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     text = " ".join(args)
-    result = []
-    result.append(" ".join(list(text)))
-    for pos, symbol in enumerate(text[1:]):
-        result.append(symbol + " " + "  " * pos + symbol)
+    result = [" ".join(list(text))]
+    result.extend(
+        f"{symbol} " + "  " * pos + symbol
+        for pos, symbol in enumerate(text[1:])
+    )
     result = list("\n".join(result))
     result[0] = text[0]
     result = "".join(result)

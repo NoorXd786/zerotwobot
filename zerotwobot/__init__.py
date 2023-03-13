@@ -64,8 +64,8 @@ if ENV:
     OWNER_USERNAME = os.environ.get("OWNER_USERNAME", None)
 
     try:
-        DRAGONS = set(int(x) for x in os.environ.get("DRAGONS", "").split())
-        DEV_USERS = set(int(x) for x in os.environ.get("DEV_USERS", "").split())
+        DRAGONS = {int(x) for x in os.environ.get("DRAGONS", "").split()}
+        DEV_USERS = {int(x) for x in os.environ.get("DEV_USERS", "").split()}
     except ValueError:
         raise Exception("Your sudo or dev users list does not contain valid integers.")
 
@@ -95,12 +95,12 @@ if ENV:
 
     if DB_URI.startswith("postgres://"):
         DB_URI = DB_URI.replace("postgres://", "postgresql://")
-    
+
     TEMP_DOWNLOAD_LOC = os.environ.get("TEMP_DOWNLOAD_LOC", None)
 
 
     try:
-        BL_CHATS = set(int(x) for x in os.environ.get("BL_CHATS", "").split())
+        BL_CHATS = {int(x) for x in os.environ.get("BL_CHATS", "").split()}
     except ValueError:
         raise Exception("Your blacklisted chats list does not contain valid integers.")
 
@@ -117,8 +117,8 @@ else:
     OWNER_USERNAME = Config.OWNER_USERNAME
     ALLOW_CHATS = Config.ALLOW_CHATS
     try:
-        DRAGONS = set(int(x) for x in Config.DRAGONS or [])
-        DEV_USERS = set(int(x) for x in Config.DEV_USERS or [])
+        DRAGONS = {int(x) for x in Config.DRAGONS or []}
+        DEV_USERS = {int(x) for x in Config.DEV_USERS or []}
     except ValueError:
         raise Exception("Your sudo or dev users list does not contain valid integers.")
 
@@ -149,10 +149,10 @@ else:
         DB_URI = DB_URI.replace("postgres://", "postgresql://")
 
     try:
-        BL_CHATS = set(int(x) for x in Config.BL_CHATS or [])
+        BL_CHATS = {int(x) for x in Config.BL_CHATS or []}
     except ValueError:
         raise Exception("Your blacklisted chats list does not contain valid integers.")
-        
+
 DEV_USERS.add(OWNER_ID)
 ALIVE_TEXT = [
     "Hey developer's I'm online now.",

@@ -15,10 +15,7 @@ from pyrate_limiter import (
     MemoryListBucket,
 )
 
-if ALLOW_EXCL:
-    CMD_STARTERS = ("/", "!")
-else:
-    CMD_STARTERS = ("/",)
+CMD_STARTERS = ("/", "!") if ALLOW_EXCL else ("/", )
 
 
 class AntiSpam:
@@ -81,9 +78,8 @@ class CustomCommandHandler(CommandHandler):
             except:
                 user_id = None
 
-            if user_id:
-                if sql.is_user_blacklisted(user_id):
-                    return False
+            if user_id and sql.is_user_blacklisted(user_id):
+                return False
 
             if message.text and len(message.text) > 1:
                 fst_word =  message.text.split(None, 1)[0]
@@ -96,15 +92,15 @@ class CustomCommandHandler(CommandHandler):
                     command_parts.append(message.get_bot().username)
                     if user_id == 1087968824:
                         user_id = update.effective_chat.id
-                    if not (
-                        command_parts[0].lower() in self.commands
-                        and command_parts[1].lower() == message.get_bot().username.lower()
+                    if (
+                        command_parts[0].lower() not in self.commands
+                        or command_parts[1].lower()
+                        != message.get_bot().username.lower()
                     ):
                         return None
                     if SpamChecker.check_user(user_id):
                         return None
-                    filter_result = self.filters.check_update(update)
-                    if filter_result:
+                    if filter_result := self.filters.check_update(update):
                         return args, filter_result
                     return False
         return None
@@ -128,8 +124,8 @@ class CustomCommandHandler(CommandHandler):
             context.args = check_result[0]
             if isinstance(check_result[1], dict):
                 context.update(check_result[1])
-                if isinstance(check_result[1], dict):
-                    context.update(check_result[1])
+            if isinstance(check_result[1], dict):
+                context.update(check_result[1])
 
 
 

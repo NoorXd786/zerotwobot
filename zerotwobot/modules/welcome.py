@@ -79,10 +79,8 @@ async def send(update: Update, message, keyboard, backup_message):
     # topic_chat = get_action_topic(chat.id)
     # Clean service welcome
     if cleanserv:
-        try:
+        with suppress(BadRequest):
             await application.bot.delete_message(chat.id, update.message.message_id)
-        except BadRequest:
-            pass
         reply = False
     try:
         try:
@@ -100,14 +98,7 @@ async def send(update: Update, message, keyboard, backup_message):
                 reply_to_message_id=reply,
             )
     except BadRequest as excp:
-        if excp.message == "Reply message not found":
-            msg = await update.effective_message.reply_text(
-                markdown_to_html(message),
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=keyboard,
-                quote=False,
-            )
-        elif excp.message == "Button_url_invalid":
+        if excp.message == "Button_url_invalid":
             try:
                 msg = await application.bot.send_message(
                     chat.id,
@@ -126,6 +117,15 @@ async def send(update: Update, message, keyboard, backup_message):
                     parse_mode=ParseMode.MARKDOWN,
                     reply_to_message_id=reply,
                 )
+        elif excp.message == "Have no rights to send a message":
+            return
+        elif excp.message == "Reply message not found":
+            msg = await update.effective_message.reply_text(
+                markdown_to_html(message),
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=keyboard,
+                quote=False,
+            )
         elif excp.message == "Unsupported url protocol":
             try:
                 msg = await application.bot.send_message(
@@ -169,8 +169,6 @@ async def send(update: Update, message, keyboard, backup_message):
             LOGGER.warning(message)
             LOGGER.warning(keyboard)
             LOGGER.exception("Could not parse! got invalid url host errors")
-        elif excp.message == "Have no rights to send a message":
-            return
         else:
             try:
                 msg = await application.bot.send_message(

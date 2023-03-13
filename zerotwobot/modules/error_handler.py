@@ -101,9 +101,7 @@ async def error_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def list_errors(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in DEV_USERS:
         return
-    e = {
-        k: v for k, v in sorted(errors.items(), key=lambda item: item[1], reverse=True)
-    }
+    e = dict(sorted(errors.items(), key=lambda item: item[1], reverse=True))
     msg = "<b>Errors List:</b>\n"
     for x in e:
         msg += f"• <code>{x}:</code> <b>{e[x]}</b> #{x.identifier}\n"
@@ -114,9 +112,11 @@ async def list_errors(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_document(
             update.effective_chat.id,
             open("errors_msg.txt", "rb"),
-            caption=f"Too many errors have occured..",
+            caption="Too many errors have occured..",
             parse_mode="html",
-            message_thread_id=update.effective_message.message_thread_id if update.effective_chat.is_forum else None
+            message_thread_id=update.effective_message.message_thread_id
+            if update.effective_chat.is_forum
+            else None,
         )
         if os.path.isfile("errors_msg.txt"):
             os.remove("errors_msg.txt")

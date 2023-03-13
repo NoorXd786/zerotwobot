@@ -53,13 +53,11 @@ async def get_invalid_chats(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     except:
         pass
 
-    if not remove:
-        return kicked_chats
-    else:
+    if remove:
         for muted_chat in chat_list:
             await asyncio.sleep(0.1)
             user_sql.rem_chat(muted_chat)
-        return kicked_chats
+    return kicked_chats
 
 
 async def get_invalid_gban(update: Update, context: ContextTypes.DEFAULT_TYPE, remove: bool = False):
@@ -79,13 +77,11 @@ async def get_invalid_gban(update: Update, context: ContextTypes.DEFAULT_TYPE, r
         except:
             pass
 
-    if not remove:
-        return ungbanned_users
-    else:
+    if remove:
         for user_id in ungban_list:
             await asyncio.sleep(0.1)
             gban_sql.ungban_user(user_id)
-        return ungbanned_users
+    return ungbanned_users
 
 
 
@@ -121,26 +117,25 @@ async def callback_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await bot.answer_callback_query(query.id)
 
-    if query_type == "db_leave_chat":
-        if query.from_user.id in admin_list:
-            await bot.editMessageText("Leaving chats ...", chat_id, message.message_id)
-            chat_count = get_invalid_chats(update, context, True)
-            await update.effective_message.edit_text(
-                f"Left {chat_count} chats.",
-            )
-        else:
-            await query.answer("You are not allowed to use this.")
-    elif query_type == "db_cleanup":
-        if query.from_user.id in admin_list:
-            await bot.editMessageText("Cleaning up DB ...", chat_id, message.message_id)
-            invalid_chat_count = await get_invalid_chats(update, context, True)
-            invalid_gban_count = await get_invalid_gban(update, context, True)
-            reply = "Cleaned up {} chats and {} gbanned users from db.".format(
-                invalid_chat_count, invalid_gban_count,
-            )
-            await update.effective_message.edit_text(reply,)
-        else:
-            await query.answer("You are not allowed to use this.")
+    if query_type == "db_cleanup" and query.from_user.id in admin_list:
+        await bot.editMessageText("Cleaning up DB ...", chat_id, message.message_id)
+        invalid_chat_count = await get_invalid_chats(update, context, True)
+        invalid_gban_count = await get_invalid_gban(update, context, True)
+        reply = f"Cleaned up {invalid_chat_count} chats and {invalid_gban_count} gbanned users from db."
+        await update.effective_message.edit_text(reply,)
+    elif (
+        query_type == "db_cleanup"
+        or query_type == "db_leave_chat"
+        and query.from_user.id not in admin_list
+    ):
+        await query.answer("You are not allowed to use this.")
+
+    elif query_type == "db_leave_chat":
+        await bot.editMessageText("Leaving chats ...", chat_id, message.message_id)
+        chat_count = get_invalid_chats(update, context, True)
+        await update.effective_message.edit_text(
+            f"Left {chat_count} chats.",
+        )
 
 
 DB_CLEANUP_HANDLER = CommandHandler("dbcleanup", dbcleanup, block=False)

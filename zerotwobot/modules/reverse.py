@@ -13,9 +13,7 @@ from zerotwobot.modules.disable import DisableAbleCommandHandler
 
 async def reverse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
-    args = context.args
-    
-    if args:
+    if args := context.args:
         if len(args) <= 1:
             url = args[0]
             if url.startswith(("https://", "http://")):
@@ -24,7 +22,7 @@ async def reverse(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 result = Search(url=url)
                 name = result["output"]
                 link = result["similar"]
-                
+
                 await msg.edit_text("Uploaded to google, fetching results...")
                 await msg.edit_text(
                 text=f"{name}",
@@ -42,7 +40,7 @@ async def reverse(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
         else:
             await message.reply_text("Command must be used with a reply to an image or should give url")
-    
+
     elif message.reply_to_message and message.reply_to_message.photo:
         try:
             edit = await message.reply_text("Downloading Image")
